@@ -37,7 +37,7 @@ namespace FinalProject
                 txtEditor.Text = text;
 
                 string[] lines = text.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
-             
+                System.Console.Write("hellow");
 
             }
                
