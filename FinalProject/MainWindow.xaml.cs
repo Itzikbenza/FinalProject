@@ -38,6 +38,7 @@ namespace FinalProject
 
                 string[] lines = text.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
                 System.Console.Write("hellow");
+                System.Console.Write("script");
 
             }
                
