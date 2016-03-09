@@ -2,12 +2,26 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         WindowStartupLocation="CenterScreen"  
-        Title="MainWindow" Height="344.029" Width="575.747">
+        Title="MainWindow" Height="620.429" Width="783.747">
 
-    <DockPanel Margin="10">
+    <DockPanel Margin="10" >
         <WrapPanel HorizontalAlignment="Center" DockPanel.Dock="Top" Margin="0,0,0,10">
-            <Button Name="btnOpenFile" Click="btnOpenFile_Click" Height="41" Width="92">Open file</Button>
+            <Button Name ="btnOpenFile" Click="btnOpenFile_Click" Height="41" Width="106" >
+                <StackPanel Orientation="Horizontal">
+                    <Image Source="open-file.ico"/>
+                    <TextBlock Text=" Open file" Width="55" HorizontalAlignment="Center" FontWeight="Bold" Height="20" RenderTransformOrigin="0.5,0.5">
+                        <TextBlock.RenderTransform>
+                            <TransformGroup>
+                                <RotateTransform Angle="-0.146"/>
+                                <TranslateTransform/>
+                            </TransformGroup>
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
+                </StackPanel>
+            </Button>
         </WrapPanel>
+
+
         <TextBox Name="txtEditor" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" Margin="0,7,0,0" />
     </DockPanel>
 
