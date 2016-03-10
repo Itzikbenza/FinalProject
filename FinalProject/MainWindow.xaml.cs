@@ -28,7 +28,7 @@ namespace FinalProject
 
             InitializeComponent();
         }
-        public float[][] Jdistance; //matrix of all jaccard distance values
+        public float[][] Jdistance; //matrix of all jaccard distance values!
         public int linesNumber; //size of rows
         public string[][] FileMatrix; //matrix of the file readed
         public int threadCounter = 3; //number of thread
