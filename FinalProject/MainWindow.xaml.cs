@@ -15,10 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Navigation;
-
-
-
-
+using System.Windows.Threading;
 
 namespace FinalProject
 {
@@ -30,8 +27,14 @@ namespace FinalProject
         public Window1()
         {
             InitializeComponent();
-
+            DispatcherTimer timer = new DispatcherTimer();
+            timer.Interval = new TimeSpan(0, 0, 1);
+            timer.Tick += timer_Tick;
         }
+
+        DispatcherTimer timer = new DispatcherTimer();
+       
+        public int timeSpan;
         public float[][] Jdistance; //matrix of all jaccard distance values
         public int linesNumber; //size of rows
         public string[][] FileMatrix; //matrix of the file readed
@@ -91,19 +94,26 @@ namespace FinalProject
                 UiInvoke(() => txtEditor.Text += "Thread number " + numOfThread + " is finish\n");
                 if (threadCounter == 0)
                 {
+                    timer.Stop();
                     MessageBox.Show("Finish - Jaccard distance", "Thread", MessageBoxButton.OK, MessageBoxImage.Information);
                     UiInvoke(() => txtEditor.Text = String.Join(" ", Jdistance[0].Select(p => p.ToString()).ToArray()));
+                    UiInvoke(() => jccard_button.IsEnabled = true);
+                    threadCounter = 3;
                 }
-
             }
+
         }
 
         private void jccard_button_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(FileBuff))
-                MessageBox.Show("Please choose some DataSet by clicking on Browse button", "Error" , MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Please choose some DataSet by clicking on Browse button", "Error", MessageBoxButton.OK, MessageBoxImage.Information);
             else
             {
+                jccard_button.IsEnabled = false;
+                seconds_leb.Visibility = Visibility.Visible;
+                timeSpan = 0;
+                timer.Start();
                 string[] lines = FileBuff.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
                 FileMatrix = new string[lines.Length][];
                 for (int i = 0; i < lines.Length; i++)
@@ -122,10 +132,38 @@ namespace FinalProject
                 tt2.Start();
                 tt3.Start();
             }
-            
+        }
 
+        private void cosine_button_Click(object sender, RoutedEventArgs e)
+        {
+
+            //double dotProduct = 0.0;
+            //double normA = 0.0;
+            //double normB = 0.0;
+            //for (int i = 0; i < vectorA.length; i++)
+            //{
+            //    dotProduct += vectorA[i] * vectorB[i];
+            //    normA += Math.pow(vectorA[i], 2);
+            //    normB += Math.pow(vectorB[i], 2);
+            //}
+            //return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+
+
+            //CosineSimilarity sim = new CosineSimilarity();
+            //// create two vectors for inputs
+            //double[] p = new double[] { 2.5, 3.5, 3.0, 3.5, 2.5, 3.0 };
+            //double[] q = new double[] { 3.0, 3.5, 1.5, 5.0, 3.5, 3.0 };
+            //// get similarity between the two vectors
+            //double similarityScore = sim.GetSimilarityScore(p, q);
+        }
+
+        public void timer_Tick(object sender, EventArgs e)
+        {
+            time_leb.Content = timeSpan++;
+            CommandManager.InvalidateRequerySuggested();
         }
 
     }
+
 
 }
