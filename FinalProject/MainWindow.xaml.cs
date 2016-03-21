@@ -27,14 +27,10 @@ namespace FinalProject
         public Window1()
         {
             InitializeComponent();
-            DispatcherTimer timer = new DispatcherTimer();
-            timer.Interval = new TimeSpan(0, 0, 1);
-            timer.Tick += timer_Tick;
         }
 
         DispatcherTimer timer = new DispatcherTimer();
-       
-        public int timeSpan;
+        public int timeSpan=0;
         public float[][] Jdistance; //matrix of all jaccard distance values
         public int linesNumber; //size of rows
         public string[][] FileMatrix; //matrix of the file readed
@@ -98,7 +94,7 @@ namespace FinalProject
                     MessageBox.Show("Finish - Jaccard distance", "Thread", MessageBoxButton.OK, MessageBoxImage.Information);
                     UiInvoke(() => txtEditor.Text = String.Join(" ", Jdistance[0].Select(p => p.ToString()).ToArray()));
                     UiInvoke(() => jccard_button.IsEnabled = true);
-                    threadCounter = 3;
+                    threadCounter = 3; 
                 }
             }
 
@@ -113,7 +109,10 @@ namespace FinalProject
                 jccard_button.IsEnabled = false;
                 seconds_leb.Visibility = Visibility.Visible;
                 timeSpan = 0;
+                timer.Interval = new TimeSpan(0,0,1);
+                timer.Tick += timer_Tick;
                 timer.Start();
+               
                 string[] lines = FileBuff.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
                 FileMatrix = new string[lines.Length][];
                 for (int i = 0; i < lines.Length; i++)
