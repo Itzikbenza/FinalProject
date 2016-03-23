@@ -16,6 +16,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Navigation;
 using System.Windows.Threading;
+using System.Diagnostics;
 
 namespace FinalProject
 {
@@ -27,23 +28,27 @@ namespace FinalProject
         public Window1()
         {
             InitializeComponent();
+            timer.Tick += new EventHandler(dt_Tick);
+            timer.Interval = new TimeSpan(0, 0, 0, 0, 1);
         }
 
         DispatcherTimer timer = new DispatcherTimer();
-        public int timeSpan=0;
-        public float[][] Jdistance; //matrix of all jaccard distance values
-        public int linesNumber; //size of rows
-        public string[][] FileMatrix; //matrix of the file readed
-        public int threadCounter = 3; //number of thread
-        public Object thisLock = new Object(); //object lock critical section
-        public string FileBuff;
+        Stopwatch stopWatch = new Stopwatch();
+        string currentTime;
+
+        float[][] Jdistance; //matrix of all jaccard distance values
+        int linesNumber; //size of rows
+        string[][] FileMatrix; //matrix of the file readed
+        int threadCounter = 3; //number of thread
+        Object thisLock = new Object(); //object lock critical section
+        string FileBuff;
 
         //INVOKE
         public static void UiInvoke(Action a)
         {
             Application.Current.Dispatcher.Invoke(a);
         }
-
+        //Open DataSet file
         private void Open_File_Click(object sender, RoutedEventArgs e)
         {
             //string FileBuff; //buffer for read the file
@@ -91,7 +96,8 @@ namespace FinalProject
                 if (threadCounter == 0)
                 {
                     timer.Stop();
-                    MessageBox.Show("Finish - Jaccard distance", "Thread", MessageBoxButton.OK, MessageBoxImage.Information);
+                    stopWatch.Stop();
+                    UiInvoke(() => MessageBox.Show(String.Format("Finish - Jaccard distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
                     UiInvoke(() => txtEditor.Text = String.Join(" ", Jdistance[0].Select(p => p.ToString()).ToArray()));
                     UiInvoke(() => jccard_button.IsEnabled = true);
                     threadCounter = 3; 
@@ -107,12 +113,10 @@ namespace FinalProject
             else
             {
                 jccard_button.IsEnabled = false;
-                seconds_leb.Visibility = Visibility.Visible;
-                timeSpan = 0;
-                timer.Interval = new TimeSpan(0,0,1);
-                timer.Tick += timer_Tick;
+                currentTime = string.Empty;
+                stopWatch.Reset();
+                stopWatch.Start();  
                 timer.Start();
-               
                 string[] lines = FileBuff.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
                 FileMatrix = new string[lines.Length][];
                 for (int i = 0; i < lines.Length; i++)
@@ -156,13 +160,20 @@ namespace FinalProject
             //double similarityScore = sim.GetSimilarityScore(p, q);
         }
 
-        public void timer_Tick(object sender, EventArgs e)
+        void dt_Tick(object sender, EventArgs e)
         {
-            time_leb.Content = timeSpan++;
-            CommandManager.InvalidateRequerySuggested();
+            if (stopWatch.IsRunning)
+            {
+                TimeSpan ts = stopWatch.Elapsed;
+                currentTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                    ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds / 10);
+                ClockTextBlock.Text = currentTime;
+            }
         }
 
-    }
+
+
+        }
 
 
 }
