@@ -37,6 +37,7 @@ namespace FinalProject
         string currentTime;
 
         float[][] Jdistance; //matrix of all jaccard distance values
+        float[][] CosineSimilarity; //matrix of all cosine similarity values
         int linesNumber; //size of rows
         string[][] FileMatrix; //matrix of the file readed
         int threadCounter = 3; //number of thread
@@ -57,7 +58,46 @@ namespace FinalProject
             {
                 FileBuff = File.ReadAllText(openFileDialog.FileName);
                 txtEditor.Text = FileBuff; //show the file on txt editor
+                jccard_button.IsEnabled = true;
+                cosine_button.IsEnabled = true;
             }
+        }
+
+        public void calc_CosineSimilarity(int start, int end, int numOfThread)
+        {
+           
+            float[][] tempDis;
+            string[][] temp;
+            lock (thisLock)
+            {
+                temp = FileMatrix;
+                tempDis = CosineSimilarity;
+            }
+
+            for (int i = start; i < end; i++)
+            {
+                CosineSimilarity[i] = new float[linesNumber];
+                for (int j = i; j < linesNumber; j++)
+                {
+                    
+                }
+            }
+            lock (thisLock)
+            {
+                Array.Copy(tempDis, start, Jdistance, start, end - start);
+                threadCounter--;
+                UiInvoke(() => txtEditor.Text += "Thread number " + numOfThread + " is finish\n");
+                if (threadCounter == 0)
+                {
+                    timer.Stop();
+                    stopWatch.Stop();
+                    UiInvoke(() => MessageBox.Show(String.Format("Finish - Jaccard distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
+                    UiInvoke(() => txtEditor.Text = String.Join(" ", Jdistance[0].Select(p => p.ToString()).ToArray()));
+                    UiInvoke(() => jccard_button.IsEnabled = true);
+                    threadCounter = 3;
+                }
+            }
+
         }
 
         public void calc_JDistance(int start, int end, int numOfThread)
@@ -98,8 +138,7 @@ namespace FinalProject
                     timer.Stop();
                     stopWatch.Stop();
                     UiInvoke(() => MessageBox.Show(String.Format("Finish - Jaccard distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
-                    UiInvoke(() => txtEditor.Text = String.Join(" ", Jdistance[0].Select(p => p.ToString()).ToArray()));
-                    UiInvoke(() => jccard_button.IsEnabled = true);
+                    UiInvoke(() => txtEditor.Text = String.Join(" ", Jdistance[0].Select(p => p.ToString()).ToArray()));               
                     threadCounter = 3; 
                 }
             }
@@ -113,6 +152,7 @@ namespace FinalProject
             else
             {
                 jccard_button.IsEnabled = false;
+                cosine_button.IsEnabled = false;
                 currentTime = string.Empty;
                 stopWatch.Reset();
                 stopWatch.Start();  
@@ -139,7 +179,8 @@ namespace FinalProject
 
         private void cosine_button_Click(object sender, RoutedEventArgs e)
         {
-
+            cosine_button.IsEnabled = false;
+            jccard_button.IsEnabled = false;
             //double dotProduct = 0.0;
             //double normA = 0.0;
             //double normB = 0.0;
