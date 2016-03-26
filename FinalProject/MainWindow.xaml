@@ -24,6 +24,7 @@
         <Button x:Name="kmeans_button" Content="K-Means" HorizontalAlignment="Left" Margin="279,567,0,0" VerticalAlignment="Top" Width="115" Height="40" FontFamily="AR JULIAN" FontSize="14"/>
         <Label x:Name="timer_lebal" Content="Timer:" HorizontalAlignment="Left" Margin="597,571,0,0" VerticalAlignment="Top" Width="79" RenderTransformOrigin="0.54,1.276" FontSize="24" FontFamily="Imprint MT Shadow" Height="39"/>
         <TextBlock x:Name="ClockTextBlock" HorizontalAlignment="Left" Margin="681,576,0,0" TextWrapping="Wrap" Text="00:00:00" VerticalAlignment="Top" Height="39" Width="160" FontFamily="Imprint MT Shadow" FontSize="24"/>
+        <ProgressBar x:Name="loding_progrss" HorizontalAlignment="Left" Height="39" Margin="715,94,0,0" VerticalAlignment="Top" Width="139" ValueChanged="loding_progrss_ValueChanged" Background="#FFE6E6E6" Visibility="Hidden"/>
 
 
     </Grid>

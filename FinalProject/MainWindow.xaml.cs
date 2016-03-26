@@ -30,6 +30,7 @@ namespace FinalProject
             InitializeComponent();
             timer.Tick += new EventHandler(dt_Tick);
             timer.Interval = new TimeSpan(0, 0, 0, 0, 1);
+           
         }
 
         DispatcherTimer timer = new DispatcherTimer();
@@ -91,7 +92,8 @@ namespace FinalProject
                 {
                     timer.Stop();
                     stopWatch.Stop();
-                    UiInvoke(() => MessageBox.Show(String.Format("Finish - Jaccard distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
+                    UiInvoke(() => loding_progrss.Value = 100);
+                    UiInvoke(() => MessageBox.Show(String.Format("Finish - Cosine similarity on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
                     UiInvoke(() => txtEditor.Text = String.Join(" ", Jdistance[0].Select(p => p.ToString()).ToArray()));
                     UiInvoke(() => jccard_button.IsEnabled = true);
                     threadCounter = 3;
@@ -137,9 +139,12 @@ namespace FinalProject
                 {
                     timer.Stop();
                     stopWatch.Stop();
+                    UiInvoke(() => loding_progrss.Value = 100);
                     UiInvoke(() => MessageBox.Show(String.Format("Finish - Jaccard distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
-                    UiInvoke(() => txtEditor.Text = String.Join(" ", Jdistance[0].Select(p => p.ToString()).ToArray()));               
-                    threadCounter = 3; 
+                    UiInvoke(() => txtEditor.Text = String.Join(" ", Jdistance[0].Select(p => p.ToString()).ToArray()));
+                    UiInvoke(() => loding_progrss.Visibility = Visibility.Hidden);
+                    threadCounter = 3;
+                   
                 }
             }
 
@@ -153,6 +158,7 @@ namespace FinalProject
             {
                 jccard_button.IsEnabled = false;
                 cosine_button.IsEnabled = false;
+                loding_progrss.Visibility = Visibility.Visible;
                 currentTime = string.Empty;
                 stopWatch.Reset();
                 stopWatch.Start();  
@@ -209,7 +215,13 @@ namespace FinalProject
                 currentTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
                     ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds / 10);
                 ClockTextBlock.Text = currentTime;
+                loding_progrss.Value = ts.Seconds;
             }
+        }
+
+        private void loding_progrss_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            
         }
 
 
