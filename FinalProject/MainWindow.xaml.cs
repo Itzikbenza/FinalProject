@@ -18,6 +18,7 @@ using System.Windows.Navigation;
 using System.Windows.Threading;
 using System.Diagnostics;
 
+
 namespace FinalProject
 {
     /// <summary>
@@ -66,7 +67,7 @@ namespace FinalProject
 
         public void calc_CosineSimilarity(int start, int end, int numOfThread)
         {
-           
+            HashSet<string> hashCosine= new HashSet<string>();
             float[][] tempDis;
             string[][] temp;
             lock (thisLock)
@@ -74,7 +75,7 @@ namespace FinalProject
                 temp = FileMatrix;
                 tempDis = CosineSimilarity;
             }
-
+            
             for (int i = start; i < end; i++)
             {
                 CosineSimilarity[i] = new float[linesNumber];
@@ -187,7 +188,46 @@ namespace FinalProject
         {
             cosine_button.IsEnabled = false;
             jccard_button.IsEnabled = false;
-            //double dotProduct = 0.0;
+            HashSet<string> hashCosine = new HashSet<string>();
+            Dictionary<string, int > init_dict = new Dictionary<string, int >();//define defulat dictioanry for all the dataset
+            
+            string[] lines = FileBuff.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
+            FileMatrix = new string[lines.Length][];
+            for (int i = 0; i < lines.Length; i++)
+            {
+                FileMatrix[i] = lines[i].Split(new string[] { "\t", " " }, StringSplitOptions.RemoveEmptyEntries);
+            }
+            for ( int i = 0 ; i<lines.Length; i++)
+            {
+                for (int j = 0 ; j<FileMatrix[i].Length ; j++)
+                {
+                    hashCosine.Add(FileMatrix[i][j]);
+                }
+            }
+            txtEditor.Clear();
+            
+            foreach (string i in hashCosine)
+            {
+                txtEditor.Text += string.Format (" {0}",i);
+            }
+
+            txtEditor.Text += "\n" + hashCosine.Count.ToString();
+            foreach (string  key in hashCosine)
+            {
+                init_dict[key] = 0;
+            }
+            Dictionary<string, int>[] arr_dict = new Dictionary<string, int>[lines.Length];
+            for (int i = 0; i < lines.Length; i++)
+            {
+                arr_dict[i] = new Dictionary<string, int>(init_dict);
+                for (int j=0; j<FileMatrix[i].Length; j++)
+                {
+
+                }
+            }
+           
+          
+                ///double dotProduct = 0.0;
             //double normA = 0.0;
             //double normB = 0.0;
             //for (int i = 0; i < vectorA.length; i++)
