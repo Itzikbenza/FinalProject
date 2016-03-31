@@ -219,12 +219,30 @@ namespace FinalProject
             Dictionary<string, int>[] arr_dict = new Dictionary<string, int>[lines.Length];
             for (int i = 0; i < lines.Length; i++)
             {
-                arr_dict[i] = new Dictionary<string, int>(init_dict);
-                for (int j=0; j<FileMatrix[i].Length; j++)
+                arr_dict[i] = new Dictionary<string, int>(init_dict);// init array of dictionaris by the file 
+            }
+            for (int i =0 ; i<lines.Length; i++)
+            {
+                for (int j =0 ; j< FileMatrix[i].Length ; j++)
                 {
-
+                    if (arr_dict[i].ContainsKey(FileMatrix[i][j]))
+                    {
+                        arr_dict[i][FileMatrix[i][j]] += 1;// cehck if the key is exsit in the line and up the value of the key 
+                    }
                 }
             }
+            //txtEditor.Text = " ";
+            //for (int i = 0; i < arr_dict.Length; i++)
+            //{
+            //    foreach (KeyValuePair<string, int> kvp in arr_dict[i])
+            //    {
+            //        txtEditor.Text = string.Format("{0}", kvp.Value);
+            //    }
+            //}
+            
+
+            
+            
            
           
                 ///double dotProduct = 0.0;
