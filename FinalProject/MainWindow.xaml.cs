@@ -3,18 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using System.Windows.Navigation;
 using System.Windows.Threading;
 using System.Diagnostics;
 
@@ -231,7 +221,28 @@ namespace FinalProject
                     }
                 }
             }
-            //txtEditor.Text = " ";
+            CosineSimilarity = new float[lines.Length][];
+            int numerator;
+            double denominatorA, denominatorB;
+            for (int i = 0; i < arr_dict.Length; i++)
+            {
+                CosineSimilarity[i] = new float[lines.Length];  
+                for (int j = i; j < arr_dict.Length; j++)
+                {
+                    numerator = 0;
+                    denominatorA = 0;
+                    denominatorB = 0;
+                    foreach (var item in arr_dict[i])
+                    {
+                        numerator += arr_dict[j][item.Key] * item.Value;
+                        denominatorA += Math.Pow(item.Value, 2);
+                        denominatorB += Math.Pow(arr_dict[j][item.Key], 2);
+                    }
+                    CosineSimilarity[i][j] = numerator / (float)(Math.Sqrt(denominatorA) * Math.Sqrt(denominatorB));
+                }
+
+            }
+            txtEditor.Text = " ";
             //for (int i = 0; i < arr_dict.Length; i++)
             //{
             //    foreach (KeyValuePair<string, int> kvp in arr_dict[i])
@@ -239,30 +250,30 @@ namespace FinalProject
             //        txtEditor.Text = string.Format("{0}", kvp.Value);
             //    }
             //}
-            
-
-            
-            
-           
-          
-                ///double dotProduct = 0.0;
-            //double normA = 0.0;
-            //double normB = 0.0;
-            //for (int i = 0; i < vectorA.length; i++)
-            //{
-            //    dotProduct += vectorA[i] * vectorB[i];
-            //    normA += Math.pow(vectorA[i], 2);
-            //    normB += Math.pow(vectorB[i], 2);
-            //}
-            //return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 
 
-            //CosineSimilarity sim = new CosineSimilarity();
-            //// create two vectors for inputs
-            //double[] p = new double[] { 2.5, 3.5, 3.0, 3.5, 2.5, 3.0 };
-            //double[] q = new double[] { 3.0, 3.5, 1.5, 5.0, 3.5, 3.0 };
-            //// get similarity between the two vectors
-            //double similarityScore = sim.GetSimilarityScore(p, q);
+
+
+
+
+                        ///double dotProduct = 0.0;
+                        //double normA = 0.0;
+                        //double normB = 0.0;
+                        //for (int i = 0; i < vectorA.length; i++)
+                        //{
+                        //    dotProduct += vectorA[i] * vectorB[i];
+                        //    normA += Math.pow(vectorA[i], 2);
+                        //    normB += Math.pow(vectorB[i], 2);
+                        //}
+                        //return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+
+
+                        //CosineSimilarity sim = new CosineSimilarity();
+                        //// create two vectors for inputs
+                        //double[] p = new double[] { 2.5, 3.5, 3.0, 3.5, 2.5, 3.0 };
+                        //double[] q = new double[] { 3.0, 3.5, 1.5, 5.0, 3.5, 3.0 };
+                        //// get similarity between the two vectors
+                        //double similarityScore = sim.GetSimilarityScore(p, q);
         }
 
         void dt_Tick(object sender, EventArgs e)
