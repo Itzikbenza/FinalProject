@@ -30,6 +30,7 @@ namespace FinalProject
 
         float[][] Jdistance; //matrix of all jaccard distance values
         float[][] CosineSimilarity; //matrix of all cosine similarity values
+        Dictionary<string, int>[] arr_dict;
         int linesNumber; //size of rows
         string[][] FileMatrix; //matrix of the file readed
         int threadCounter = 3; //number of thread
@@ -55,71 +56,7 @@ namespace FinalProject
             }
         }
 
-        public Dictionary<string, int>[] cosineReadData()
-        {
-            HashSet<string> hashCosine = new HashSet<string>();
-            Dictionary<string, int> init_dict = new Dictionary<string, int>();//define defulat dictioanry for all the dataset
-
-            string[] lines = FileBuff.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
-            linesNumber = lines.Length;
-            FileMatrix = new string[linesNumber][];
-            for (int i = 0; i < linesNumber; i++)
-                FileMatrix[i] = lines[i].Split(new string[] { "\t", " " }, StringSplitOptions.RemoveEmptyEntries);
-
-            for (int i = 0; i < linesNumber; i++)
-                for (int j = 0; j < FileMatrix[i].Length; j++)
-                    hashCosine.Add(FileMatrix[i][j]);
-
-            string text_show = null;
-            text_show = "The hash set include the values : ";
-            foreach (string i in hashCosine)
-                text_show += string.Format("{0} ", i);
-
-            text_show += string.Format("\nThe hash set include {0} values", hashCosine.Count.ToString());
-            UiInvoke(() => txtEditor.Text = text_show);
-
-            foreach (string key in hashCosine)
-                init_dict[key] = 0;
-
-            Dictionary<string, int>[] arr_dict = new Dictionary<string, int>[linesNumber];
-            for (int i = 0; i < linesNumber; i++)
-                arr_dict[i] = new Dictionary<string, int>(init_dict);// init array of dictionaris by the file 
-
-            for (int i = 0; i < linesNumber; i++)
-                for (int j = 0; j < FileMatrix[i].Length; j++)
-                    if (arr_dict[i].ContainsKey(FileMatrix[i][j]))
-                        arr_dict[i][FileMatrix[i][j]] += 1;// cehck if the key is exsit in the line and up the value of the key
-            return arr_dict;
-        }
-
-        public void calc_CosineSimilarity(Dictionary<string, int>[] arr_dict)
-        {
-            CosineSimilarity = new float[linesNumber][];
-            int numerator;
-            double denominatorA, denominatorB;
-            for (int i = 0; i < arr_dict.Length; i++)
-            {
-                CosineSimilarity[i] = new float[linesNumber];
-                for (int j = i; j < arr_dict.Length; j++)
-                {
-                    numerator = 0;
-                    denominatorA = 0.0;
-                    denominatorB = 0.0;
-                    foreach (var item in arr_dict[i])
-                    {
-                        numerator += arr_dict[j][item.Key] * item.Value;
-                        denominatorA += Math.Pow(item.Value, 2);
-                        denominatorB += Math.Pow(arr_dict[j][item.Key], 2);
-                    }
-                    CosineSimilarity[i][j] = numerator / (float)(Math.Sqrt(denominatorA) * (float)Math.Sqrt(denominatorB));
-                }
-            }
-            UiInvoke(() => txtEditor.Clear());
-            timer.Stop();
-            stopWatch.Stop();
-            UiInvoke(() => MessageBox.Show(String.Format("Finish - Cosine similarity on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
-
-        }
+        
 
         public void calc_JDistance(int start, int end, int numOfThread)
         {
@@ -203,6 +140,70 @@ namespace FinalProject
             }
         }
 
+        public void cosineReadData()
+        {
+            HashSet<string> hashCosine = new HashSet<string>();
+            Dictionary<string, int> init_dict = new Dictionary<string, int>();//define defulat dictioanry for all the dataset
+
+            string[] lines = FileBuff.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
+            linesNumber = lines.Length;
+            FileMatrix = new string[linesNumber][];
+            for (int i = 0; i < linesNumber; i++)
+                FileMatrix[i] = lines[i].Split(new string[] { "\t", " " }, StringSplitOptions.RemoveEmptyEntries);
+
+            for (int i = 0; i < linesNumber; i++)
+                for (int j = 0; j < FileMatrix[i].Length; j++)
+                    hashCosine.Add(FileMatrix[i][j]);
+
+            string text_show = null;
+            text_show = "The hash set include the values : ";
+            foreach (string i in hashCosine)
+                text_show += string.Format("{0} ", i);
+
+            text_show += string.Format("\nThe hash set include {0} values", hashCosine.Count.ToString());
+            UiInvoke(() => txtEditor.Text = text_show);
+
+            foreach (string key in hashCosine)
+                init_dict[key] = 0;
+
+            arr_dict = new Dictionary<string, int>[linesNumber];
+            for (int i = 0; i < linesNumber; i++)
+                arr_dict[i] = new Dictionary<string, int>(init_dict);// init array of dictionaris by the file 
+
+            for (int i = 0; i < linesNumber; i++)
+                for (int j = 0; j < FileMatrix[i].Length; j++)
+                    if (arr_dict[i].ContainsKey(FileMatrix[i][j]))
+                        arr_dict[i][FileMatrix[i][j]] += 1;// cehck if the key is exsit in the line and up the value of the key
+        }
+
+        public void calc_CosineSimilarity(Dictionary<string, int>[] arr_dict)
+        {
+            CosineSimilarity = new float[linesNumber][];
+            double numerator;
+            double denominatorA, denominatorB;
+            for (int i = 0; i < arr_dict.Length; i++)
+            {
+                CosineSimilarity[i] = new float[linesNumber];
+                for (int j = i; j < arr_dict.Length; j++)
+                {
+                    numerator = 0.0;
+                    denominatorA = 0.0;
+                    denominatorB = 0.0;
+                    foreach (var item in arr_dict[i])
+                    {
+                        numerator += arr_dict[j][item.Key] * item.Value;
+                        denominatorA += Math.Pow(item.Value, 2);
+                        denominatorB += Math.Pow(arr_dict[j][item.Key], 2);
+                    }
+                    CosineSimilarity[i][j] = (float)(numerator / (Math.Sqrt(denominatorA) * Math.Sqrt(denominatorB)));
+                }
+            }
+            UiInvoke(() => txtEditor.Clear());
+            timer.Stop();
+            stopWatch.Stop();
+            UiInvoke(() => MessageBox.Show(String.Format("Finish - Cosine similarity on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
+
+        }
         private void cosine_button_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(FileBuff))
@@ -217,45 +218,15 @@ namespace FinalProject
                 stopWatch.Start();
                 timer.Start();
                 txtEditor.Clear();
-                Dictionary<string, int>[] arr_dict;
-                arr_dict = cosineReadData();
 
-                //Thread readData_thread = new Thread(() => cosineReadData());
+                Thread readData_thread = new Thread(() => cosineReadData());
+                readData_thread.Start();
+                //readData_thread.Join();
                 Thread cosine_thread = new Thread(() => calc_CosineSimilarity(arr_dict));
                 cosine_thread.Start();
+                //cosine_thread.Join();
 
             }
-            //for (int i = 0; i < arr_dict.Length; i++)
-            //{
-            //    foreach (KeyValuePair<string, int> kvp in arr_dict[i])
-            //    {
-            //        txtEditor.Text = string.Format("{0}", kvp.Value);
-            //    }
-            //}
-
-
-
-
-
-
-            ///double dotProduct = 0.0;
-            //double normA = 0.0;
-            //double normB = 0.0;
-            //for (int i = 0; i < vectorA.length; i++)
-            //{
-            //    dotProduct += vectorA[i] * vectorB[i];
-            //    normA += Math.pow(vectorA[i], 2);
-            //    normB += Math.pow(vectorB[i], 2);
-            //}
-            //return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-
-
-            //CosineSimilarity sim = new CosineSimilarity();
-            //// create two vectors for inputs
-            //double[] p = new double[] { 2.5, 3.5, 3.0, 3.5, 2.5, 3.0 };
-            //double[] q = new double[] { 3.0, 3.5, 1.5, 5.0, 3.5, 3.0 };
-            //// get similarity between the two vectors
-            //double similarityScore = sim.GetSimilarityScore(p, q);
         }
 
         void dt_Tick(object sender, EventArgs e)
