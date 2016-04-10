@@ -222,8 +222,8 @@ namespace FinalProject
                 }
             }
             CosineSimilarity = new float[lines.Length][];
-            int numerator;
-            double denominatorA, denominatorB;
+            float numerator;
+            float denominatorA, denominatorB;
             for (int i = 0; i < arr_dict.Length; i++)
             {
                 CosineSimilarity[i] = new float[lines.Length];  
@@ -232,13 +232,15 @@ namespace FinalProject
                     numerator = 0;
                     denominatorA = 0;
                     denominatorB = 0;
-                    foreach (var item in arr_dict[i])
+
+                    foreach (var item in arr_dict[i].Values)
                     {
-                        numerator += arr_dict[j][item.Key] * item.Value;
-                        denominatorA += Math.Pow(item.Value, 2);
-                        denominatorB += Math.Pow(arr_dict[j][item.Key], 2);
+                        item += 1; 
+                        //numerator += arr_dict[j][item.Key] * item.Value;
+                        //denominatorA += (float)Math.Pow(item.Value, 2);
+                        //denominatorB += (float)Math.Pow(arr_dict[j][item.Key], 2);
                     }
-                    CosineSimilarity[i][j] = numerator / (float)(Math.Sqrt(denominatorA) * Math.Sqrt(denominatorB));
+                //    CosineSimilarity[i][j] = numerator / (float)(Math.Sqrt(denominatorA) * (float)Math.Sqrt(denominatorB));
                 }
 
             }
