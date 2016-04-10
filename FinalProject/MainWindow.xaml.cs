@@ -21,7 +21,7 @@ namespace FinalProject
             InitializeComponent();
             timer.Tick += new EventHandler(dt_Tick);
             timer.Interval = new TimeSpan(0, 0, 0, 0, 1);
-           
+
         }
 
         DispatcherTimer timer = new DispatcherTimer();
@@ -55,41 +55,69 @@ namespace FinalProject
             }
         }
 
-        public void calc_CosineSimilarity(int start, int end, int numOfThread)
+        public Dictionary<string, int>[] cosineReadData()
         {
-            HashSet<string> hashCosine= new HashSet<string>();
-            float[][] tempDis;
-            string[][] temp;
-            lock (thisLock)
-            {
-                temp = FileMatrix;
-                tempDis = CosineSimilarity;
-            }
-            
-            for (int i = start; i < end; i++)
+            HashSet<string> hashCosine = new HashSet<string>();
+            Dictionary<string, int> init_dict = new Dictionary<string, int>();//define defulat dictioanry for all the dataset
+
+            string[] lines = FileBuff.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
+            linesNumber = lines.Length;
+            FileMatrix = new string[linesNumber][];
+            for (int i = 0; i < linesNumber; i++)
+                FileMatrix[i] = lines[i].Split(new string[] { "\t", " " }, StringSplitOptions.RemoveEmptyEntries);
+
+            for (int i = 0; i < linesNumber; i++)
+                for (int j = 0; j < FileMatrix[i].Length; j++)
+                    hashCosine.Add(FileMatrix[i][j]);
+
+            string text_show = null;
+            text_show = "The hash set include the values : ";
+            foreach (string i in hashCosine)
+                text_show += string.Format("{0} ", i);
+
+            text_show += string.Format("\nThe hash set include {0} values", hashCosine.Count.ToString());
+            UiInvoke(() => txtEditor.Text = text_show);
+
+            foreach (string key in hashCosine)
+                init_dict[key] = 0;
+
+            Dictionary<string, int>[] arr_dict = new Dictionary<string, int>[linesNumber];
+            for (int i = 0; i < linesNumber; i++)
+                arr_dict[i] = new Dictionary<string, int>(init_dict);// init array of dictionaris by the file 
+
+            for (int i = 0; i < linesNumber; i++)
+                for (int j = 0; j < FileMatrix[i].Length; j++)
+                    if (arr_dict[i].ContainsKey(FileMatrix[i][j]))
+                        arr_dict[i][FileMatrix[i][j]] += 1;// cehck if the key is exsit in the line and up the value of the key
+            return arr_dict;
+        }
+
+        public void calc_CosineSimilarity(Dictionary<string, int>[] arr_dict)
+        {
+            CosineSimilarity = new float[linesNumber][];
+            int numerator;
+            double denominatorA, denominatorB;
+            for (int i = 0; i < arr_dict.Length; i++)
             {
                 CosineSimilarity[i] = new float[linesNumber];
-                for (int j = i; j < linesNumber; j++)
+                for (int j = i; j < arr_dict.Length; j++)
                 {
-                    
+                    numerator = 0;
+                    denominatorA = 0.0;
+                    denominatorB = 0.0;
+                    foreach (var item in arr_dict[i])
+                    {
+                        numerator += arr_dict[j][item.Key] * item.Value;
+                        denominatorA += Math.Pow(item.Value, 2);
+                        denominatorB += Math.Pow(arr_dict[j][item.Key], 2);
+                    }
+                    CosineSimilarity[i][j] = numerator / (float)(Math.Sqrt(denominatorA) * (float)Math.Sqrt(denominatorB));
                 }
             }
-            lock (thisLock)
-            {
-                Array.Copy(tempDis, start, Jdistance, start, end - start);
-                threadCounter--;
-                UiInvoke(() => txtEditor.Text += "Thread number " + numOfThread + " is finish\n");
-                if (threadCounter == 0)
-                {
-                    timer.Stop();
-                    stopWatch.Stop();
-                    UiInvoke(() => loding_progrss.Value = 100);
-                    UiInvoke(() => MessageBox.Show(String.Format("Finish - Cosine similarity on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
-                    UiInvoke(() => txtEditor.Text = String.Join(" ", Jdistance[0].Select(p => p.ToString()).ToArray()));
-                    UiInvoke(() => jccard_button.IsEnabled = true);
-                    threadCounter = 3;
-                }
-            }
+            UiInvoke(() => txtEditor.Clear());
+            timer.Stop();
+            stopWatch.Stop();
+            UiInvoke(() => MessageBox.Show(String.Format("Finish - Cosine similarity on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
 
         }
 
@@ -135,7 +163,7 @@ namespace FinalProject
                     UiInvoke(() => txtEditor.Text = String.Join(" ", Jdistance[0].Select(p => p.ToString()).ToArray()));
                     UiInvoke(() => loding_progrss.Visibility = Visibility.Hidden);
                     threadCounter = 3;
-                   
+
                 }
             }
 
@@ -152,17 +180,18 @@ namespace FinalProject
                 loding_progrss.Visibility = Visibility.Visible;
                 currentTime = string.Empty;
                 stopWatch.Reset();
-                stopWatch.Start();  
+                stopWatch.Start();
                 timer.Start();
                 string[] lines = FileBuff.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
-                FileMatrix = new string[lines.Length][];
-                for (int i = 0; i < lines.Length; i++)
+                linesNumber = lines.Length;
+                FileMatrix = new string[linesNumber][];
+                for (int i = 0; i < linesNumber; i++)
                 {
                     FileMatrix[i] = lines[i].Split(new string[] { "\t", " " }, StringSplitOptions.None);
                 }
 
-                Jdistance = new float[lines.Length][];
-                linesNumber = lines.Length;
+                Jdistance = new float[linesNumber][];
+
                 //Thread creation
                 Thread tt1 = new Thread(() => calc_JDistance(0, linesNumber / 5, 1));
                 Thread tt2 = new Thread(() => calc_JDistance(linesNumber / 5, (linesNumber / 5) * 2, 2));
@@ -176,75 +205,26 @@ namespace FinalProject
 
         private void cosine_button_Click(object sender, RoutedEventArgs e)
         {
-            cosine_button.IsEnabled = false;
-            jccard_button.IsEnabled = false;
-            HashSet<string> hashCosine = new HashSet<string>();
-            Dictionary<string, int > init_dict = new Dictionary<string, int >();//define defulat dictioanry for all the dataset
-            
-            string[] lines = FileBuff.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
-            FileMatrix = new string[lines.Length][];
-            for (int i = 0; i < lines.Length; i++)
+            if (string.IsNullOrEmpty(FileBuff))
+                MessageBox.Show("Please choose some DataSet by clicking on Browse button", "Error", MessageBoxButton.OK, MessageBoxImage.Information);
+            else
             {
-                FileMatrix[i] = lines[i].Split(new string[] { "\t", " " }, StringSplitOptions.RemoveEmptyEntries);
-            }
-            for ( int i = 0 ; i<lines.Length; i++)
-            {
-                for (int j = 0 ; j<FileMatrix[i].Length ; j++)
-                {
-                    hashCosine.Add(FileMatrix[i][j]);
-                }
-            }
-            txtEditor.Clear();
-            
-            foreach (string i in hashCosine)
-            {
-                txtEditor.Text += string.Format (" {0}",i);
-            }
+                //initials
+                cosine_button.IsEnabled = false;
+                jccard_button.IsEnabled = false;
+                currentTime = string.Empty;
+                stopWatch.Reset();
+                stopWatch.Start();
+                timer.Start();
+                txtEditor.Clear();
+                Dictionary<string, int>[] arr_dict;
+                arr_dict = cosineReadData();
 
-            txtEditor.Text += "\n" + hashCosine.Count.ToString();
-            foreach (string  key in hashCosine)
-            {
-                init_dict[key] = 0;
-            }
-            Dictionary<string, int>[] arr_dict = new Dictionary<string, int>[lines.Length];
-            for (int i = 0; i < lines.Length; i++)
-            {
-                arr_dict[i] = new Dictionary<string, int>(init_dict);// init array of dictionaris by the file 
-            }
-            for (int i =0 ; i<lines.Length; i++)
-            {
-                for (int j =0 ; j< FileMatrix[i].Length ; j++)
-                {
-                    if (arr_dict[i].ContainsKey(FileMatrix[i][j]))
-                    {
-                        arr_dict[i][FileMatrix[i][j]] += 1;// cehck if the key is exsit in the line and up the value of the key 
-                    }
-                }
-            }
-            CosineSimilarity = new float[lines.Length][];
-            float numerator;
-            float denominatorA, denominatorB;
-            for (int i = 0; i < arr_dict.Length; i++)
-            {
-                CosineSimilarity[i] = new float[lines.Length];  
-                for (int j = i; j < arr_dict.Length; j++)
-                {
-                    numerator = 0;
-                    denominatorA = 0;
-                    denominatorB = 0;
-
-                    foreach (var item in arr_dict[i].Values)
-                    {
-                        item += 1; 
-                        //numerator += arr_dict[j][item.Key] * item.Value;
-                        //denominatorA += (float)Math.Pow(item.Value, 2);
-                        //denominatorB += (float)Math.Pow(arr_dict[j][item.Key], 2);
-                    }
-                //    CosineSimilarity[i][j] = numerator / (float)(Math.Sqrt(denominatorA) * (float)Math.Sqrt(denominatorB));
-                }
+                //Thread readData_thread = new Thread(() => cosineReadData());
+                Thread cosine_thread = new Thread(() => calc_CosineSimilarity(arr_dict));
+                cosine_thread.Start();
 
             }
-            txtEditor.Text = " ";
             //for (int i = 0; i < arr_dict.Length; i++)
             //{
             //    foreach (KeyValuePair<string, int> kvp in arr_dict[i])
@@ -258,24 +238,24 @@ namespace FinalProject
 
 
 
-                        ///double dotProduct = 0.0;
-                        //double normA = 0.0;
-                        //double normB = 0.0;
-                        //for (int i = 0; i < vectorA.length; i++)
-                        //{
-                        //    dotProduct += vectorA[i] * vectorB[i];
-                        //    normA += Math.pow(vectorA[i], 2);
-                        //    normB += Math.pow(vectorB[i], 2);
-                        //}
-                        //return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+            ///double dotProduct = 0.0;
+            //double normA = 0.0;
+            //double normB = 0.0;
+            //for (int i = 0; i < vectorA.length; i++)
+            //{
+            //    dotProduct += vectorA[i] * vectorB[i];
+            //    normA += Math.pow(vectorA[i], 2);
+            //    normB += Math.pow(vectorB[i], 2);
+            //}
+            //return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 
 
-                        //CosineSimilarity sim = new CosineSimilarity();
-                        //// create two vectors for inputs
-                        //double[] p = new double[] { 2.5, 3.5, 3.0, 3.5, 2.5, 3.0 };
-                        //double[] q = new double[] { 3.0, 3.5, 1.5, 5.0, 3.5, 3.0 };
-                        //// get similarity between the two vectors
-                        //double similarityScore = sim.GetSimilarityScore(p, q);
+            //CosineSimilarity sim = new CosineSimilarity();
+            //// create two vectors for inputs
+            //double[] p = new double[] { 2.5, 3.5, 3.0, 3.5, 2.5, 3.0 };
+            //double[] q = new double[] { 3.0, 3.5, 1.5, 5.0, 3.5, 3.0 };
+            //// get similarity between the two vectors
+            //double similarityScore = sim.GetSimilarityScore(p, q);
         }
 
         void dt_Tick(object sender, EventArgs e)
@@ -292,12 +272,12 @@ namespace FinalProject
 
         private void loding_progrss_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            
-        }
-
-
 
         }
+
+
+
+    }
 
 
 }
