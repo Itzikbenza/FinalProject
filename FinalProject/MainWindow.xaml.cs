@@ -56,7 +56,7 @@ namespace FinalProject
             }
         }
 
-        
+
 
         public void calc_JDistance(int start, int end, int numOfThread)
         {
@@ -95,10 +95,8 @@ namespace FinalProject
                 {
                     timer.Stop();
                     stopWatch.Stop();
-                    UiInvoke(() => loding_progrss.Value = 100);
                     UiInvoke(() => MessageBox.Show(String.Format("Finish - Jaccard distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
                     UiInvoke(() => txtEditor.Text = String.Join(" ", Jdistance[0].Select(p => p.ToString()).ToArray()));
-                    UiInvoke(() => loding_progrss.Visibility = Visibility.Hidden);
                     threadCounter = 3;
 
                 }
@@ -114,7 +112,6 @@ namespace FinalProject
             {
                 jccard_button.IsEnabled = false;
                 cosine_button.IsEnabled = false;
-                loding_progrss.Visibility = Visibility.Visible;
                 currentTime = string.Empty;
                 stopWatch.Reset();
                 stopWatch.Start();
@@ -130,9 +127,9 @@ namespace FinalProject
                 Jdistance = new float[linesNumber][];
 
                 //Thread creation
-                Thread tt1 = new Thread(() => calc_JDistance(0, linesNumber / 5, 1));
-                Thread tt2 = new Thread(() => calc_JDistance(linesNumber / 5, (linesNumber / 5) * 2, 2));
-                Thread tt3 = new Thread(() => calc_JDistance((linesNumber / 5) * 2, linesNumber, 3));
+                Thread tt1 = new Thread(() => calc_JDistance(0, (int)(linesNumber*0.25), 1));
+                Thread tt2 = new Thread(() => calc_JDistance((int)(linesNumber * 0.25), (int)(linesNumber * 0.25) + (int)(linesNumber * 0.3), 2));
+                Thread tt3 = new Thread(() => calc_JDistance((int)(linesNumber * 0.2) + (int)(linesNumber * 0.4), linesNumber, 3));
 
                 tt1.Start();
                 tt2.Start();
@@ -189,6 +186,10 @@ namespace FinalProject
                     numerator = 0.0;
                     denominatorA = 0.0;
                     denominatorB = 0.0;
+                    if (j==3196)
+                    {
+                        UiInvoke(()=>txtEditor.Clear());
+                    }
                     foreach (var item in arr_dict[i])
                     {
                         numerator += arr_dict[j][item.Key] * item.Value;
@@ -219,9 +220,8 @@ namespace FinalProject
                 timer.Start();
                 txtEditor.Clear();
 
-                Thread readData_thread = new Thread(() => cosineReadData());
-                readData_thread.Start();
-                //readData_thread.Join();
+                cosineReadData();
+                
                 Thread cosine_thread = new Thread(() => calc_CosineSimilarity(arr_dict));
                 cosine_thread.Start();
                 //cosine_thread.Join();
@@ -237,16 +237,77 @@ namespace FinalProject
                 currentTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
                     ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds / 10);
                 ClockTextBlock.Text = currentTime;
-                loding_progrss.Value = ts.Seconds;
             }
         }
 
-        private void loding_progrss_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        private void calc_pageRank_jdistance()
         {
+            double[] PageRank;
+            double rank = 0.0;
+            double d = 0.85;
+            PageRank = new double[linesNumber];
+            for (int i = 0; i < Jdistance.Length; i++)
+            {
+                rank = 0;
+                for (int j = 0; j < Jdistance[i].Length; j++)
+                {
+                    if (Jdistance[i][j] == 0)
+                    {
+                        rank += Jdistance[j][i] / linesNumber;
+                        PageRank[i] = 1 - d + d * rank;
+                    }
+                    else
+                    {
+                        rank += Jdistance[i][j] / linesNumber;
+                        PageRank[i] = 1 - d + d * rank;
+                    }
 
+                }
+            }
+            txtEditor.Clear();
+            for (int i = 0; i < PageRank.Length; i++)
+            {
+                txtEditor.Text += string.Format("{0} ", PageRank[i]);
+            }
         }
 
+        private void calc_pageRank_cosineSimilarity()
+        {
+            float[] PageRank;
+            float rank = 0;
+            float d = (float)0.85;
+            PageRank = new float[linesNumber];
+            for (int i = 0; i < linesNumber; i++)
+            {
+                rank = 0;
+                for (int j = 0; j < linesNumber; j++)
+                {
+                    if (CosineSimilarity[i][j] == 0.0)
+                    {
+                        rank += CosineSimilarity[j][i] / linesNumber;
+                        PageRank[i] = 1 - d + d * rank;
+                    }
+                    else
+                    {
+                        rank += CosineSimilarity[i][j] / linesNumber;
+                        PageRank[i] = 1 - d + d * rank;
+                    }
 
+                }
+            }
+            txtEditor.Clear();
+            for (int i = 0; i < PageRank.Length; i++)
+            {
+                txtEditor.Text += string.Format("{0} ", PageRank[i]);
+            }
+        }
+
+        
+
+        private void PageRank_button_Click(object sender, RoutedEventArgs e)
+        {
+            calc_pageRank_cosineSimilarity();
+        }
 
     }
 
