@@ -36,6 +36,7 @@ namespace FinalProject
         int threadCounter = 3; //number of thread
         Object thisLock = new Object(); //object lock critical section
         string FileBuff;
+        int flag = 0;
 
         //INVOKE
         public static void UiInvoke(Action a)
@@ -56,7 +57,14 @@ namespace FinalProject
             }
         }
 
-
+        public void splitBySpacesAndLines(string text)
+        {
+            string[] lines = text.Split(new string[] { "\n", "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+            linesNumber = lines.Length;
+            FileMatrix = new string[linesNumber][];
+            for (int i = 0; i < linesNumber; i++)
+                FileMatrix[i] = lines[i].Split(new string[] { "\t", " " }, StringSplitOptions.RemoveEmptyEntries);
+        }
 
         public void calc_JDistance(int start, int end, int numOfThread)
         {
@@ -98,10 +106,8 @@ namespace FinalProject
                     UiInvoke(() => MessageBox.Show(String.Format("Finish - Jaccard distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
                     UiInvoke(() => txtEditor.Text = String.Join(" ", Jdistance[0].Select(p => p.ToString()).ToArray()));
                     threadCounter = 3;
-
                 }
             }
-
         }
 
         private void jccard_button_Click(object sender, RoutedEventArgs e)
@@ -113,21 +119,16 @@ namespace FinalProject
                 jccard_button.IsEnabled = false;
                 cosine_button.IsEnabled = false;
                 currentTime = string.Empty;
+                flag = 1;
                 stopWatch.Reset();
                 stopWatch.Start();
                 timer.Start();
-                string[] lines = FileBuff.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
-                linesNumber = lines.Length;
-                FileMatrix = new string[linesNumber][];
-                for (int i = 0; i < linesNumber; i++)
-                {
-                    FileMatrix[i] = lines[i].Split(new string[] { "\t", " " }, StringSplitOptions.None);
-                }
+                splitBySpacesAndLines(FileBuff);
 
                 Jdistance = new float[linesNumber][];
 
                 //Thread creation
-                Thread tt1 = new Thread(() => calc_JDistance(0, (int)(linesNumber*0.25), 1));
+                Thread tt1 = new Thread(() => calc_JDistance(0, (int)(linesNumber * 0.25), 1));
                 Thread tt2 = new Thread(() => calc_JDistance((int)(linesNumber * 0.25), (int)(linesNumber * 0.25) + (int)(linesNumber * 0.3), 2));
                 Thread tt3 = new Thread(() => calc_JDistance((int)(linesNumber * 0.2) + (int)(linesNumber * 0.4), linesNumber, 3));
 
@@ -142,11 +143,7 @@ namespace FinalProject
             HashSet<string> hashCosine = new HashSet<string>();
             Dictionary<string, int> init_dict = new Dictionary<string, int>();//define defulat dictioanry for all the dataset
 
-            string[] lines = FileBuff.Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None);
-            linesNumber = lines.Length;
-            FileMatrix = new string[linesNumber][];
-            for (int i = 0; i < linesNumber; i++)
-                FileMatrix[i] = lines[i].Split(new string[] { "\t", " " }, StringSplitOptions.RemoveEmptyEntries);
+            splitBySpacesAndLines(FileBuff);
 
             for (int i = 0; i < linesNumber; i++)
                 for (int j = 0; j < FileMatrix[i].Length; j++)
@@ -186,17 +183,17 @@ namespace FinalProject
                     numerator = 0.0;
                     denominatorA = 0.0;
                     denominatorB = 0.0;
-                    if (j==3196)
-                    {
-                        UiInvoke(()=>txtEditor.Clear());
-                    }
+                   
                     foreach (var item in arr_dict[i])
                     {
                         numerator += arr_dict[j][item.Key] * item.Value;
                         denominatorA += Math.Pow(item.Value, 2);
                         denominatorB += Math.Pow(arr_dict[j][item.Key], 2);
                     }
-                    CosineSimilarity[i][j] = (float)(numerator / (Math.Sqrt(denominatorA) * Math.Sqrt(denominatorB)));
+                    if (denominatorA == 0 || denominatorB == 0) //checking Division by zero
+                        CosineSimilarity[i][j] = 0;
+                    else
+                        CosineSimilarity[i][j] = (float)(numerator / (Math.Sqrt(denominatorA) * Math.Sqrt(denominatorB)));
                 }
             }
             UiInvoke(() => txtEditor.Clear());
@@ -215,13 +212,14 @@ namespace FinalProject
                 cosine_button.IsEnabled = false;
                 jccard_button.IsEnabled = false;
                 currentTime = string.Empty;
+                flag = 2;
                 stopWatch.Reset();
                 stopWatch.Start();
                 timer.Start();
                 txtEditor.Clear();
 
                 cosineReadData();
-                
+
                 Thread cosine_thread = new Thread(() => calc_CosineSimilarity(arr_dict));
                 cosine_thread.Start();
                 //cosine_thread.Join();
@@ -266,9 +264,7 @@ namespace FinalProject
             }
             txtEditor.Clear();
             for (int i = 0; i < PageRank.Length; i++)
-            {
                 txtEditor.Text += string.Format("{0} ", PageRank[i]);
-            }
         }
 
         private void calc_pageRank_cosineSimilarity()
@@ -302,11 +298,18 @@ namespace FinalProject
             }
         }
 
-        
+
 
         private void PageRank_button_Click(object sender, RoutedEventArgs e)
         {
-            calc_pageRank_cosineSimilarity();
+            if (flag == 1)
+            {
+                calc_pageRank_jdistance();
+            }
+            if (flag == 2)
+            {
+                calc_pageRank_cosineSimilarity();
+            }
         }
 
     }
