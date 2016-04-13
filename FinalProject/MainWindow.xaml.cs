@@ -128,10 +128,10 @@ namespace FinalProject
                 Jdistance = new float[linesNumber][];
 
                 //Thread creation
-                Thread tt1 = new Thread(() => calc_JDistance(0, (int)(linesNumber * 0.25), 1));
-                Thread tt2 = new Thread(() => calc_JDistance((int)(linesNumber * 0.25), (int)(linesNumber * 0.25) + (int)(linesNumber * 0.3), 2));
-                Thread tt3 = new Thread(() => calc_JDistance((int)(linesNumber * 0.2) + (int)(linesNumber * 0.4), linesNumber, 3));
-
+                Thread tt1 = new Thread(() => calc_JDistance(0, (int)(linesNumber * 0.2), 1));
+                Thread tt2 = new Thread(() => calc_JDistance((int)(linesNumber * 0.2), 2 * (int)(linesNumber * 0.2)  , 2));
+                Thread tt3 = new Thread(() => calc_JDistance(2 * (int)(linesNumber * 0.2), linesNumber, 3));
+               
                 tt1.Start();
                 tt2.Start();
                 tt3.Start();
