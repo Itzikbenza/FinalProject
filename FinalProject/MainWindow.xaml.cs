@@ -240,6 +240,9 @@ namespace FinalProject
 
         private void calc_pageRank_jdistance()
         {
+            stopWatch.Reset();
+            stopWatch.Start();
+            timer.Start();
             double[] PageRank;
             double rank = 0.0;
             double d = 0.85;
@@ -262,13 +265,20 @@ namespace FinalProject
 
                 }
             }
-            txtEditor.Clear();
+            timer.Stop();
+            stopWatch.Stop();
+            UiInvoke(() => MessageBox.Show(String.Format("Finish - PageRank jaccard on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
+            UiInvoke(() => txtEditor.Clear());
             for (int i = 0; i < PageRank.Length; i++)
-                txtEditor.Text += string.Format("{0} ", PageRank[i]);
+                UiInvoke(() => txtEditor.Text += string.Format("{0} ", PageRank[i]));
+
         }
 
         private void calc_pageRank_cosineSimilarity()
         {
+            stopWatch.Reset();
+            stopWatch.Start();
+            timer.Start();
             float[] PageRank;
             float rank = 0;
             float d = (float)0.85;
@@ -291,10 +301,13 @@ namespace FinalProject
 
                 }
             }
-            txtEditor.Clear();
+            timer.Stop();
+            stopWatch.Stop();
+            UiInvoke(() => MessageBox.Show(String.Format("Finish - PageRank Cosine on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
+            UiInvoke(() => txtEditor.Clear());
             for (int i = 0; i < PageRank.Length; i++)
             {
-                txtEditor.Text += string.Format("{0} ", PageRank[i]);
+                UiInvoke(() => txtEditor.Text += string.Format("{0} ", PageRank[i]));
             }
         }
 
@@ -304,12 +317,22 @@ namespace FinalProject
         {
             if (flag == 1)
             {
-                calc_pageRank_jdistance();
+                Thread pagerank_jaccard_thread = new Thread(() => calc_pageRank_jdistance());
+                pagerank_jaccard_thread.Start();
             }
             if (flag == 2)
             {
-                calc_pageRank_cosineSimilarity();
+                Thread pagerank_cosine_thread = new Thread(() => calc_pageRank_cosineSimilarity());
+                pagerank_cosine_thread.Start();
             }
+        }
+
+        private void kmeans_button_Click(object sender, RoutedEventArgs e)
+        {
+            string question = "How many clusters do you want to create?";
+            Window2 win = new Window2(question);
+            win.Show();
+            
         }
 
     }
