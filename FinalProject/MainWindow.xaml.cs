@@ -330,8 +330,8 @@ namespace FinalProject
         private void kmeans_button_Click(object sender, RoutedEventArgs e)
         {
             string question = "How many clusters do you want to create?";
-            Window2 win = new Window2(question);
-            win.Show();
+            kInputWindow kInput = new kInputWindow(question);
+            kInput.ShowDialog();
             
         }
 

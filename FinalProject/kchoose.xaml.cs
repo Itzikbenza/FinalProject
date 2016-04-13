@@ -17,32 +17,30 @@ namespace FinalProject
     /// <summary>
     /// Interaction logic for Window2.xaml
     /// </summary>
-    public partial class Window2 : Window
+    public partial class kInputWindow : Window
     {
-        
-        
-            public Window2(string question)
-            {
-                InitializeComponent();
-                lblQuestion.Content = question;
-                
-            }
 
-            private void btnDialogOk_Click(object sender, RoutedEventArgs e)
-            {
-                this.DialogResult = true;
-            }
+        public kInputWindow(string question)
+        {
+            InitializeComponent();
+            lblQuestion.Content = question;
+        }
 
-            private void Window_ContentRendered(object sender, EventArgs e)
-            {
-                txtAnswer.SelectAll();
-                txtAnswer.Focus();
-            }
+        private void btnDialogOk_Click(object sender, RoutedEventArgs e)
+        {
+            this.DialogResult = true;
+        }
 
-            public string Answer
-            {
-                get { return txtAnswer.Text; }
-            }
+        private void Window_ContentRendered(object sender, EventArgs e)
+        {
+            txtAnswer.SelectAll();
+            txtAnswer.Focus();
+        }
+
+        public string Answer
+        {
+            get { return txtAnswer.Text; }
         }
     }
+}
 
