@@ -7,7 +7,8 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
 using System.Diagnostics;
-
+using System.Text.RegularExpressions;
+using System.Windows.Input;
 
 namespace FinalProject
 {
@@ -332,9 +333,13 @@ namespace FinalProject
             string question = "How many clusters do you want to create?";
             kInputWindow kInput = new kInputWindow(question);
             kInput.ShowDialog();
-            
-        }
+            if (kInput.DialogResult.HasValue && kInput.DialogResult.Value)
 
+                MessageBox.Show("User clicked OK");
+            else
+                MessageBox.Show("User clicked Cancel");
+           
+        }
     }
 
 

@@ -17,7 +17,15 @@
         <Image Source="question.jpg" Width="32" Height="32" Grid.RowSpan="2" Margin="20,0" />
 
         <Label Name="lblQuestion" Grid.Column="1">Question:</Label>
-        <TextBox Name="txtAnswer" MinWidth="250" Grid.ColumnSpan="2" Margin="71,26,0.6,0" Grid.RowSpan="2">Answer</TextBox>
+        <TextBox Name="txtAnswer" MinWidth="250" Grid.ColumnSpan="2" Margin="71,26,0.6,0" Grid.RowSpan="2" PreviewTextInput="NumberValidationTextBox" >
+            <TextBox.Text>
+                <Binding Path="text" Mode="OneWayToSource"
+             UpdateSourceTrigger="PropertyChanged" >
+                    <Binding.ValidationRules>
+                    </Binding.ValidationRules>
+                </Binding>
+            </TextBox.Text>
+        </TextBox>
 
         <WrapPanel Grid.Row="2" Grid.ColumnSpan="2" HorizontalAlignment="Right" Margin="0,15,0,0">
             <Button IsDefault="True" Name="btnDialogOk" Click="btnDialogOk_Click" MinWidth="60" Margin="0,0,10,0">_Ok</Button>
