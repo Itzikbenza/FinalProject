@@ -8,15 +8,15 @@ using System.Windows.Controls;
 
 namespace FinalProject
 {
-    public class kRangeRule : ValidationRule
+    public class CustomValidationRule : ValidationRule
     {
-        private int k;
-
         public override ValidationResult Validate(object value, CultureInfo cultureInfo)
         {
-            if (value == null || value.ToString() == string.Empty)
+            if (string.IsNullOrEmpty(value.ToString()))
                 return new ValidationResult(false, "No number was entered!");
-            
+            if (value.ToString().Contains(' '))
+                return new ValidationResult(false, "No spaces allowed!");
+
             return ValidationResult.ValidResult;
         }
     }

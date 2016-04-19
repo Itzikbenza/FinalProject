@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -20,11 +21,13 @@ namespace FinalProject
     /// </summary>
     public partial class kInputWindow : Window
     {
+        public string ResultText { get; set; }
 
         public kInputWindow(string question)
         {
             InitializeComponent();
             lblQuestion.Content = question;
+            this.DataContext = this;
         }
 
         private void btnDialogOk_Click(object sender, RoutedEventArgs e)
@@ -34,7 +37,6 @@ namespace FinalProject
 
         private void Window_ContentRendered(object sender, EventArgs e)
         {
-            txtAnswer.SelectAll();
             txtAnswer.Focus();
         }
 
