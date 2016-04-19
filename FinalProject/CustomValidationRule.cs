@@ -10,6 +10,7 @@ namespace FinalProject
 {
     public class CustomValidationRule : ValidationRule
     {
+
         public override ValidationResult Validate(object value, CultureInfo cultureInfo)
         {
             if (string.IsNullOrEmpty(value.ToString()))

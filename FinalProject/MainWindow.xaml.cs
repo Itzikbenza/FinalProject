@@ -313,7 +313,6 @@ namespace FinalProject
         }
 
 
-
         private void PageRank_button_Click(object sender, RoutedEventArgs e)
         {
             if (flag == 1)
@@ -335,12 +334,7 @@ namespace FinalProject
             kInputWindow kInput = new kInputWindow(question);
             kInput.ShowDialog();
             if (kInput.DialogResult.HasValue && kInput.DialogResult.Value)
-            {
-                MessageBox.Show("User clicked OK");
-                kAnswer = kInput.Answer;
-            }
-            else
-                MessageBox.Show("User clicked Cancel");
+                            kAnswer = kInput.Answer;
         }
     }
 

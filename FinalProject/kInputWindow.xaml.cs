@@ -32,6 +32,9 @@ namespace FinalProject
 
         private void btnDialogOk_Click(object sender, RoutedEventArgs e)
         {
+            if (string.IsNullOrEmpty(Answer))
+                MessageBox.Show("Please enter number!", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+            else
             this.DialogResult = true;
         }
 
