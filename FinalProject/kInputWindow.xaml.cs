@@ -22,12 +22,14 @@ namespace FinalProject
     public partial class kInputWindow : Window
     {
         public string ResultText { get; set; }
+        public int kMax { get; set; }
 
-        public kInputWindow(string question)
+        public kInputWindow(string question,int kMax)
         {
             InitializeComponent();
             lblQuestion.Content = question;
             this.DataContext = this;
+            this.kMax = kMax;
         }
 
         private void btnDialogOk_Click(object sender, RoutedEventArgs e)

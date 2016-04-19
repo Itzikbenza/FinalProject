@@ -55,6 +55,8 @@ namespace FinalProject
                 txtEditor.Text = FileBuff; //show the file on txt editor
                 jccard_button.IsEnabled = true;
                 cosine_button.IsEnabled = true;
+                string[] lines = FileBuff.Split(new string[] { "\n", "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+                linesNumber = lines.Length;
             }
         }
 
@@ -331,7 +333,8 @@ namespace FinalProject
         {
             string question = "How many clusters do you want to create?";
             string kAnswer;
-            kInputWindow kInput = new kInputWindow(question);
+            int lines = linesNumber;
+            kInputWindow kInput = new kInputWindow(question, lines);
             kInput.ShowDialog();
             if (kInput.DialogResult.HasValue && kInput.DialogResult.Value)
                             kAnswer = kInput.Answer;
