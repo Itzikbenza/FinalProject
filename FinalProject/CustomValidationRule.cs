@@ -10,14 +10,17 @@ namespace FinalProject
 {
     public class CustomValidationRule : ValidationRule
     {
-        public int kMax { get; set; }
+        public int kMax
+        {
+            get { return kMax; }
+            set { kMax = value; }
+        }
 
         public override ValidationResult Validate(object value, CultureInfo cultureInfo)
         {
             if (string.IsNullOrEmpty(value.ToString()))
                 return new ValidationResult(false, "No number was entered!");
             if (value.ToString().Contains(' '))
-                return new ValidationResult(false, string.Format("No spaces allowed! {0}",kMax));
             try
             {
                 int num = Convert.ToInt32(value);
@@ -28,8 +31,7 @@ namespace FinalProject
             {
                 return new ValidationResult(false, fe.Message);
             }
-            //if ((int)value == 0 || (int)value > kMax)
-            //    return new ValidationResult(false, string.Format("Number must be in range of (0,{0})", kMax));
+
             return ValidationResult.ValidResult;
         }
     }
