@@ -21,6 +21,7 @@ namespace FinalProject
             if (string.IsNullOrEmpty(value.ToString()))
                 return new ValidationResult(false, "No number was entered!");
             if (value.ToString().Contains(' '))
+                return new ValidationResult(false, "No spaces allowed!");
             try
             {
                 int num = Convert.ToInt32(value);
