@@ -22,16 +22,16 @@ namespace FinalProject
                 return new ValidationResult(false, "No number was entered!");
             if (value.ToString().Contains(' '))
                 return new ValidationResult(false, "No spaces allowed!");
-            try
-            {
-                int num = Convert.ToInt32(value);
-                if (num == 0)
-                    return new ValidationResult(false, string.Format("Number must be in range of (0,{0})", kMax));
-            }
-            catch (FormatException fe)
-            {
-                return new ValidationResult(false, fe.Message);
-            }
+            //try
+            //{
+            //    int num = Convert.ToInt32(value);
+            //    if (num == 0)
+            //        return new ValidationResult(false, string.Format("Number must be in range of (0,{0})", kMax));
+            //}
+            //catch (FormatException fe)
+            //{
+            //    return new ValidationResult(false, fe.Message);
+            //}
 
             return ValidationResult.ValidResult;
         }

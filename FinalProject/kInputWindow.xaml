@@ -19,8 +19,8 @@
         <Image Source="question.jpg" Width="32" Height="32" Grid.RowSpan="2" Margin="20,0" />
 
         <Label Name="lblQuestion" Grid.Column="1">Question:</Label>
-        
-        <TextBox Name="txtAnswer" MinWidth="250" Grid.ColumnSpan="2" Margin="71,26,0.6,0" Grid.RowSpan="2" PreviewTextInput="NumberValidationTextBox" 
+
+        <TextBox Name="txtAnswer" MinWidth="250" Grid.ColumnSpan="2" Margin="71,26,0.6,0" Grid.RowSpan="2" PreviewTextInput="NumberValidationTextBox"
                  ToolTip="{Binding RelativeSource={RelativeSource Self},  Path=(Validation.Errors)[0].ErrorContent}">
             <TextBox.Text>
                 <Binding Path="ResultText" UpdateSourceTrigger="PropertyChanged" 
