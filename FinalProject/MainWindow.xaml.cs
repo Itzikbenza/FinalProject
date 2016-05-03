@@ -34,6 +34,7 @@ namespace FinalProject
         Dictionary<string, int>[] arr_dict;
         int linesNumber; //size of rows
         string[][] FileMatrix; //matrix of the file readed
+        string[] lines; //array of string - the lines of the file readed
         int threadCounter = 3; //number of thread
         Object thisLock = new Object(); //object lock critical section
         string FileBuff;
@@ -55,14 +56,14 @@ namespace FinalProject
                 txtEditor.Text = FileBuff; //show the file on txt editor
                 jccard_button.IsEnabled = true;
                 cosine_button.IsEnabled = true;
-                string[] lines = FileBuff.Split(new string[] { "\n", "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+                lines = FileBuff.Split(new string[] { "\n", "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
                 linesNumber = lines.Length;
             }
         }
 
         public void splitBySpacesAndLines(string text)
         {
-            string[] lines = text.Split(new string[] { "\n", "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+            lines = text.Split(new string[] { "\n", "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
             linesNumber = lines.Length;
             FileMatrix = new string[linesNumber][];
             for (int i = 0; i < linesNumber; i++)
@@ -331,13 +332,39 @@ namespace FinalProject
 
         private void kmeans_button_Click(object sender, RoutedEventArgs e)
         {
-            string question = "How many clusters do you want to create?";
-            string kAnswer;
-            int lines = linesNumber;
-            kInputWindow kInput = new kInputWindow(question, lines);
-            kInput.ShowDialog();
-            if (kInput.DialogResult.HasValue && kInput.DialogResult.Value)
-                            kAnswer = kInput.Answer;
+            if (string.IsNullOrEmpty(FileBuff))
+                MessageBox.Show("Please choose some DataSet by clicking on Browse button", "Error", MessageBoxButton.OK, MessageBoxImage.Information);
+            else
+            {
+                splitBySpacesAndLines(FileBuff);
+                string question = "How many clusters do you want to create?";
+                string kAnswer;
+                kInputWindow kInput = new kInputWindow(question, linesNumber);
+                kInput.ShowDialog();
+                if (kInput.DialogResult.HasValue && kInput.DialogResult.Value)
+                {
+                    kAnswer = kInput.Answer;
+                }
+            }
+
+        }
+        //k-means clustering
+        public int[] Cluster(double[][] rawData, int numClusters)
+        {
+            bool changed = true; // was there a change in at least one cluster assignment?
+            bool success = true; // were all means able to be computed? (no zero-count clusters)
+            int[] clustering = InitClustering(rawData.Length, numClusters); // semi-random initialization
+
+        }
+        private static int[] InitClustering(int lines, int numClusters)
+        {
+            Random random = new Random(0);
+            int[] clustering = new int[lines];
+            for (int i = 0; i < numClusters; i++) // make sure each cluster has at least one tuple
+                clustering[i] = i;
+            for (int i = numClusters; i < clustering.Length; i++)
+                clustering[i] = random.Next(0, numClusters); // other assignments random
+            return clustering;
         }
     }
 
