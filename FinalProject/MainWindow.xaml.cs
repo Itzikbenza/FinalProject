@@ -345,6 +345,7 @@ namespace FinalProject
                 {
                     kAnswer = Convert.ToInt32(kInput.Answer);
                     int[] clustering = InitClustering(linesNumber, kAnswer); // semi-random initialization
+                    double[] means = Allocate(kAnswer);
                 }
             }
 
@@ -357,17 +358,25 @@ namespace FinalProject
         //    int[] clustering = InitClustering(rawData.Length, numClusters); // semi-random initialization
 
         //}
-        private static int[] InitClustering(int lines, int numClusters)
+        private int[] InitClustering(int lines, int numClusters)
         {
             Random random = new Random(0);
             int[] clustering = new int[lines];
-            for (int i = 0; i < numClusters; i++) // make sure each cluster has at least one tuple
+            for (int i = 0; i < numClusters; i++) // make sure each cluster has at least one item
                 clustering[i] = i;
             for (int i = numClusters; i < clustering.Length; i++)
                 clustering[i] = random.Next(0, numClusters); // other assignments random
             return clustering;
         }
-    }
 
+        private double[] Allocate(int numClusters)
+        {
+            // convenience matrix allocator for Cluster()
+            double[] result = new double[numClusters];
+            for (int k = 0; k < numClusters; k++)
+                result[k] = 0.0;
+            return result;
+        }
+    }  
 
 }
