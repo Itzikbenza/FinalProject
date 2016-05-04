@@ -338,24 +338,25 @@ namespace FinalProject
             {
                 splitBySpacesAndLines(FileBuff);
                 string question = "How many clusters do you want to create?";
-                string kAnswer;
+                int kAnswer;
                 kInputWindow kInput = new kInputWindow(question, linesNumber);
                 kInput.ShowDialog();
                 if (kInput.DialogResult.HasValue && kInput.DialogResult.Value)
                 {
-                    kAnswer = kInput.Answer;
+                    kAnswer = Convert.ToInt32(kInput.Answer);
+                    int[] clustering = InitClustering(linesNumber, kAnswer); // semi-random initialization
                 }
             }
 
         }
         //k-means clustering
-        public int[] Cluster(double[][] rawData, int numClusters)
-        {
-            bool changed = true; // was there a change in at least one cluster assignment?
-            bool success = true; // were all means able to be computed? (no zero-count clusters)
-            int[] clustering = InitClustering(rawData.Length, numClusters); // semi-random initialization
+        //public int[] Cluster(double[][] rawData, int numClusters)
+        //{
+        //    bool changed = true; // was there a change in at least one cluster assignment?
+        //    bool success = true; // were all means able to be computed? (no zero-count clusters)
+        //    int[] clustering = InitClustering(rawData.Length, numClusters); // semi-random initialization
 
-        }
+        //}
         private static int[] InitClustering(int lines, int numClusters)
         {
             Random random = new Random(0);
