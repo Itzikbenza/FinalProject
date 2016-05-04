@@ -247,34 +247,39 @@ namespace FinalProject
             stopWatch.Reset();
             stopWatch.Start();
             timer.Start();
+            double divEpsilon = 1.0, Epsilon = 1.0, newEpsilon = 0.0;
             double[] PageRank;
+            double[] temp;
             double rank = 0.0;
             double d = 0.85;
             PageRank = new double[linesNumber];
-            for (int i = 0; i < Jdistance.Length; i++)
+            temp = new double[linesNumber];
+            for (int i = 0; i < linesNumber; i++)
             {
-                rank = 0;
-                for (int j = 0; j < Jdistance[i].Length; j++)
+                PageRank[i] = (float)1 / linesNumber;
+            }
+            while (Epsilon > 0.01)
+            {
+                for (int i = 0; i < linesNumber; i++)
                 {
-                    if (Jdistance[i][j] == 0)
+                    for (int j = 0; j < linesNumber; j++)
                     {
-                        rank += Jdistance[j][i] / linesNumber;
-                        PageRank[i] = 1 - d + d * rank;
+                        temp[i] += Jdistance[i][j] * PageRank[j];
                     }
-                    else
-                    {
-                        rank += Jdistance[i][j] / linesNumber;
-                        PageRank[i] = 1 - d + d * rank;
-                    }
-
                 }
+                for (int k = 0; k < linesNumber; k++)
+                    newEpsilon += (double)Math.Pow(temp[k] - PageRank[k], 2);
+                newEpsilon = Math.Sqrt(newEpsilon);
+                divEpsilon = newEpsilon / Epsilon;
+                Epsilon = newEpsilon;
+                PageRank = temp;
             }
             timer.Stop();
             stopWatch.Stop();
             UiInvoke(() => MessageBox.Show(String.Format("Finish - PageRank jaccard on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
             UiInvoke(() => txtEditor.Clear());
             for (int i = 0; i < PageRank.Length; i++)
-                UiInvoke(() => txtEditor.Text += string.Format("{0} ", PageRank[i]));
+                UiInvoke(() => txtEditor.Text += string.Format("{0} ",PageRank[i]));
 
         }
 
