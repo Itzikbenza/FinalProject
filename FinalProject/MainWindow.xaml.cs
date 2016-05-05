@@ -93,7 +93,7 @@ namespace FinalProject
                     interCount = intersect.Count<string>();
 
                     if (unionCount != 0)
-                        tempDis[i][j] = interCount / unionCount;
+                        tempDis[i][j] = 1 - (interCount / unionCount);
                     else
                         tempDis[i][j] = 0;
                 }
@@ -105,6 +105,11 @@ namespace FinalProject
                 UiInvoke(() => txtEditor.Text += "Thread number " + numOfThread + " is finish\n");
                 if (threadCounter == 0)
                 {
+                    for (int i = 0; i < linesNumber; i++)
+                        for (int j = 0; j < linesNumber; j++)
+                            if (Jdistance[i][j] == 0 && i != j)
+                                Jdistance[i][j] = Jdistance[j][i];
+
                     timer.Stop();
                     stopWatch.Stop();
                     UiInvoke(() => MessageBox.Show(String.Format("Finish - Jaccard distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
@@ -133,12 +138,13 @@ namespace FinalProject
 
                 //Thread creation
                 Thread tt1 = new Thread(() => calc_JDistance(0, (int)(linesNumber * 0.2), 1));
-                Thread tt2 = new Thread(() => calc_JDistance((int)(linesNumber * 0.2), 2 * (int)(linesNumber * 0.2)  , 2));
+                Thread tt2 = new Thread(() => calc_JDistance((int)(linesNumber * 0.2), 2 * (int)(linesNumber * 0.2), 2));
                 Thread tt3 = new Thread(() => calc_JDistance(2 * (int)(linesNumber * 0.2), linesNumber, 3));
-               
+
                 tt1.Start();
                 tt2.Start();
                 tt3.Start();
+
             }
         }
 
@@ -187,7 +193,7 @@ namespace FinalProject
                     numerator = 0.0;
                     denominatorA = 0.0;
                     denominatorB = 0.0;
-                   
+
                     foreach (var item in arr_dict[i])
                     {
                         numerator += arr_dict[j][item.Key] * item.Value;
@@ -197,9 +203,13 @@ namespace FinalProject
                     if (denominatorA == 0 || denominatorB == 0) //checking Division by zero
                         CosineSimilarity[i][j] = 0;
                     else
-                        CosineSimilarity[i][j] = (float)(numerator / (Math.Sqrt(denominatorA) * Math.Sqrt(denominatorB)));
+                        CosineSimilarity[i][j] = 1 - ((float)(numerator / (Math.Sqrt(denominatorA) * Math.Sqrt(denominatorB))));
                 }
             }
+            for (int i = 0; i < linesNumber; i++)
+                for (int j = 0; j < linesNumber; j++)
+                    if (CosineSimilarity[i][j] == 0.0 && i != j)
+                        CosineSimilarity[i][j] = CosineSimilarity[j][i];
             UiInvoke(() => txtEditor.Clear());
             timer.Stop();
             stopWatch.Stop();
@@ -248,38 +258,52 @@ namespace FinalProject
             stopWatch.Start();
             timer.Start();
             double divEpsilon = 1.0, Epsilon = 1.0, newEpsilon = 0.0;
-            double[] PageRank;
-            double[] temp;
-            double rank = 0.0;
-            double d = 0.85;
-            PageRank = new double[linesNumber];
-            temp = new double[linesNumber];
+            double[] PageRank = new double[linesNumber];
+            double[] newPageRank = new double[linesNumber];
             for (int i = 0; i < linesNumber; i++)
             {
                 PageRank[i] = (float)1 / linesNumber;
             }
-            while (Epsilon > 0.01)
+            UiInvoke(() => txtEditor.Clear());
+            int iteration = 0;
+            string print;
+            while (divEpsilon > 0.01)
             {
+                print = string.Format("\n\nIteration number {0}: \nThe 5 max pageRank values are:\n", iteration);
+                newEpsilon = 0.0;
+                newPageRank = ResetRank(newPageRank);
                 for (int i = 0; i < linesNumber; i++)
                 {
                     for (int j = 0; j < linesNumber; j++)
                     {
-                        temp[i] += Jdistance[i][j] * PageRank[j];
+                        newPageRank[i] += Jdistance[i][j] * PageRank[j];
                     }
                 }
                 for (int k = 0; k < linesNumber; k++)
-                    newEpsilon += (double)Math.Pow(temp[k] - PageRank[k], 2);
+                    newEpsilon += (double)Math.Pow(newPageRank[k] - PageRank[k], 2);
                 newEpsilon = Math.Sqrt(newEpsilon);
-                divEpsilon = newEpsilon / Epsilon;
+                divEpsilon = (double)Math.Abs(newEpsilon - Epsilon) / (double)Epsilon;
                 Epsilon = newEpsilon;
-                PageRank = temp;
+                for (int i = 0; i < linesNumber; i++)
+                {
+                    PageRank[i] = newPageRank[i];
+                }
+                newPageRank = bubbleRank(newPageRank);
+                UiInvoke(() => txtEditor.Text += print);
+                for (int i = 0; i < 5; i++)
+                {
+                    UiInvoke(() => txtEditor.Text += "\n" + newPageRank[i].ToString());
+                }
+                iteration++;
+
+
             }
             timer.Stop();
             stopWatch.Stop();
             UiInvoke(() => MessageBox.Show(String.Format("Finish - PageRank jaccard on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
-            UiInvoke(() => txtEditor.Clear());
-            for (int i = 0; i < PageRank.Length; i++)
-                UiInvoke(() => txtEditor.Text += string.Format("{0} ",PageRank[i]));
+            //UiInvoke(() => txtEditor.Clear());
+            //for (int i = 0; i < 5; i++)
+            //    UiInvoke(() => txtEditor.Text += string.Format("{0} ", newPageRank[i]));
 
         }
 
@@ -319,7 +343,32 @@ namespace FinalProject
                 UiInvoke(() => txtEditor.Text += string.Format("{0} ", PageRank[i]));
             }
         }
+        private double[] ResetRank(double[] temp)
+        {
+            for (int i = 0; i < temp.Length; i++)
+            {
+                temp[i] = 0.0;
+            }
+            return temp;
+        }
+        private double[] bubbleRank(double[] temp)
+        {
+            double t;
+            for (int i = linesNumber - 1; i > 0; i--)
+            {
+                for (int j = 0; j < i; j++)
+                {
+                    if (temp[j] < temp[j + 1])
+                    {
+                        t = temp[j + 1];
+                        temp[j + 1] = temp[j];
+                        temp[j] = t;
+                    }
 
+                }
+            }
+            return temp;
+        }
 
         private void PageRank_button_Click(object sender, RoutedEventArgs e)
         {
@@ -382,6 +431,6 @@ namespace FinalProject
                 result[k] = 0.0;
             return result;
         }
-    }  
+    }
 
 }
