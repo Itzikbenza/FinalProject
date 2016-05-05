@@ -390,16 +390,18 @@ namespace FinalProject
                 MessageBox.Show("Please choose some DataSet by clicking on Browse button", "Error", MessageBoxButton.OK, MessageBoxImage.Information);
             else
             {
-                splitBySpacesAndLines(FileBuff);
+                Dictionary<string, int>[] arrayDictionary;
+                arrayDictionary = KmeansReadData(FileBuff);
+
                 string question = "How many clusters do you want to create?";
-                int kAnswer;
+                int kValue;
                 kInputWindow kInput = new kInputWindow(question, linesNumber);
                 kInput.ShowDialog();
                 if (kInput.DialogResult.HasValue && kInput.DialogResult.Value)
                 {
-                    kAnswer = Convert.ToInt32(kInput.Answer);
-                    int[] clustering = InitClustering(linesNumber, kAnswer); // semi-random initialization
-                    double[] means = Allocate(kAnswer);
+                    kValue = Convert.ToInt32(kInput.Answer);
+                    int[] clustering = InitClustering(linesNumber, kValue); // semi-random initialization
+                    double[] means = Allocate(kValue);
                 }
             }
 
@@ -412,6 +414,40 @@ namespace FinalProject
         //    int[] clustering = InitClustering(rawData.Length, numClusters); // semi-random initialization
 
         //}
+
+        private Dictionary<string, int>[] KmeansReadData(string FileBuff)
+        {
+            splitBySpacesAndLines(FileBuff);
+
+            HashSet<string> hash = new HashSet<string>();
+            Dictionary<string, int> init_dict = new Dictionary<string, int>();//define defulat dictioanry for all the dataset
+
+            for (int i = 0; i < linesNumber; i++)
+                for (int j = 0; j < FileMatrix[i].Length; j++)
+                    hash.Add(FileMatrix[i][j]);
+
+            string text_show = null;
+            text_show = "The DataSet include the values : ";
+            foreach (string i in hash)
+                text_show += string.Format("{0} ", i);
+
+            text_show += string.Format("\nThe DataSet include {0} values", hash.Count.ToString());
+            UiInvoke(() => txtEditor.Text = text_show);
+
+            foreach (string key in hash)
+                init_dict[key] = 0;
+
+            arr_dict = new Dictionary<string, int>[linesNumber];
+            for (int i = 0; i < linesNumber; i++)
+                arr_dict[i] = new Dictionary<string, int>(init_dict);// init array of dictionaris by the file 
+
+            for (int i = 0; i < linesNumber; i++)
+                for (int j = 0; j < FileMatrix[i].Length; j++)
+                    if (arr_dict[i].ContainsKey(FileMatrix[i][j]))
+                        arr_dict[i][FileMatrix[i][j]] += 1;// cehck if the key is exsit in the line and up the value of the key
+            return arr_dict;
+        }
+
         private int[] InitClustering(int lines, int numClusters)
         {
             Random random = new Random(0);
@@ -421,6 +457,13 @@ namespace FinalProject
             for (int i = numClusters; i < clustering.Length; i++)
                 clustering[i] = random.Next(0, numClusters); // other assignments random
             return clustering;
+        }
+
+        private void random_centroids(int K, Dictionary<string, int> arrayDict)
+        {
+            Random random = new Random(0);
+            for (int i = numClusters; i < clustering.Length; i++)
+                clustering[i] = random.Next(0, numClusters); // other assignments random
         }
 
         private double[] Allocate(int numClusters)
