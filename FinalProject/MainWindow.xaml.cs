@@ -39,6 +39,7 @@ namespace FinalProject
         Object thisLock = new Object(); //object lock critical section
         string FileBuff;
         int flag = 0;
+        int[] linesClusters;
 
         //INVOKE
         public static void UiInvoke(Action a)
@@ -392,7 +393,9 @@ namespace FinalProject
             {
                 Dictionary<string, int>[] arrayDictionary;
                 arrayDictionary = KmeansReadData(FileBuff);
-
+                linesClusters = new int[linesNumber];
+                for (int i = 0; i < linesNumber; i++)
+                    linesClusters[i] = 0;
                 string question = "How many clusters do you want to create?";
                 int kValue;
                 kInputWindow kInput = new kInputWindow(question, linesNumber);
@@ -400,8 +403,10 @@ namespace FinalProject
                 if (kInput.DialogResult.HasValue && kInput.DialogResult.Value)
                 {
                     kValue = Convert.ToInt32(kInput.Answer);
-                    int[] clustering = InitClustering(linesNumber, kValue); // semi-random initialization
-                    double[] means = Allocate(kValue);
+                    Dictionary<string, int>[] centroids = random_centroids(kValue, arrayDictionary);
+
+                    //int[] clustering = InitClustering(linesNumber, kValue); // semi-random initialization
+                    //double[] means = Allocate(kValue);
                 }
             }
 
@@ -459,11 +464,19 @@ namespace FinalProject
             return clustering;
         }
 
-        private void random_centroids(int K, Dictionary<string, int> arrayDict)
+        private Dictionary<string, int>[] random_centroids(int K, Dictionary<string, int>[] arrayDict)
         {
             Random random = new Random(0);
-            for (int i = numClusters; i < clustering.Length; i++)
-                clustering[i] = random.Next(0, numClusters); // other assignments random
+            int rand = 0;
+            Dictionary<string, int>[] centroids = new Dictionary<string, int>[K];
+            for (int i = 0; i < K; i++)
+            {
+                rand = random.Next(0, linesNumber);
+                centroids[i] = arrayDict[rand];
+                linesClusters[rand] = i;
+
+            }
+            return centroids;
         }
 
         private double[] Allocate(int numClusters)
