@@ -39,7 +39,6 @@ namespace FinalProject
         Object thisLock = new Object(); //object lock critical section
         string FileBuff;
         int flag = 0;
-        int[] linesClusters;
 
         //INVOKE
         public static void UiInvoke(Action a)
@@ -258,6 +257,7 @@ namespace FinalProject
             stopWatch.Reset();
             stopWatch.Start();
             timer.Start();
+            double d = 0.85;
             double divEpsilon = 1.0, Epsilon = 1.0, newEpsilon = 0.0;
             double[] PageRank = new double[linesNumber];
             double[] newPageRank = new double[linesNumber];
@@ -277,7 +277,9 @@ namespace FinalProject
                 {
                     for (int j = 0; j < linesNumber; j++)
                     {
-                        newPageRank[i] += Jdistance[i][j] * PageRank[j];
+                        //newPageRank[i] += d*(Jdistance[i][j] * PageRank[j])+ (1-d)/linesNumber;
+                        //newPageRank[i] +=  Jdistance[i][j] * PageRank[j];
+                        newPageRank[i] += (d * Jdistance[i][j] + (1 - d) / linesNumber) * PageRank[j];
                     }
                 }
                 for (int k = 0; k < linesNumber; k++)
@@ -302,9 +304,6 @@ namespace FinalProject
             timer.Stop();
             stopWatch.Stop();
             UiInvoke(() => MessageBox.Show(String.Format("Finish - PageRank jaccard on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
-            //UiInvoke(() => txtEditor.Clear());
-            //for (int i = 0; i < 5; i++)
-            //    UiInvoke(() => txtEditor.Text += string.Format("{0} ", newPageRank[i]));
 
         }
 
@@ -313,36 +312,52 @@ namespace FinalProject
             stopWatch.Reset();
             stopWatch.Start();
             timer.Start();
-            float[] PageRank;
-            float rank = 0;
-            float d = (float)0.85;
-            PageRank = new float[linesNumber];
+            double d = 0.85;
+            double divEpsilon = 1.0, Epsilon = 1.0, newEpsilon = 0.0;
+            double[] PageRank = new double[linesNumber];
+            double[] newPageRank = new double[linesNumber];
             for (int i = 0; i < linesNumber; i++)
             {
-                rank = 0;
-                for (int j = 0; j < linesNumber; j++)
+                PageRank[i] = (float)1 / linesNumber;
+            }
+            UiInvoke(() => txtEditor.Clear());
+            int iteration = 0;
+            string print;
+            while (divEpsilon > 0.01)
+            {
+                print = string.Format("\n\nIteration number {0}: \nThe 5 max pageRank values are:\n", iteration);
+                newEpsilon = 0.0;
+                newPageRank = ResetRank(newPageRank);
+                for (int i = 0; i < linesNumber; i++)
                 {
-                    if (CosineSimilarity[i][j] == 0.0)
+                    for (int j = 0; j < linesNumber; j++)
                     {
-                        rank += CosineSimilarity[j][i] / linesNumber;
-                        PageRank[i] = 1 - d + d * rank;
+                        newPageRank[i] += d * (CosineSimilarity[i][j] * PageRank[j]) + (1 - d) / linesNumber;
                     }
-                    else
-                    {
-                        rank += CosineSimilarity[i][j] / linesNumber;
-                        PageRank[i] = 1 - d + d * rank;
-                    }
-
                 }
+                for (int k = 0; k < linesNumber; k++)
+                    newEpsilon += (double)Math.Pow(newPageRank[k] - PageRank[k], 2);
+                newEpsilon = Math.Sqrt(newEpsilon);
+                divEpsilon = (double)Math.Abs(newEpsilon - Epsilon) / (double)Epsilon;
+                Epsilon = newEpsilon;
+                for (int i = 0; i < linesNumber; i++)
+                {
+                    PageRank[i] = newPageRank[i];
+                }
+                newPageRank = bubbleRank(newPageRank);
+                UiInvoke(() => txtEditor.Text += print);
+                for (int i = 0; i < 5; i++)
+                {
+                    UiInvoke(() => txtEditor.Text += "\n" + newPageRank[i].ToString());
+                }
+                iteration++;
+
+
             }
             timer.Stop();
             stopWatch.Stop();
-            UiInvoke(() => MessageBox.Show(String.Format("Finish - PageRank Cosine on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
-            UiInvoke(() => txtEditor.Clear());
-            for (int i = 0; i < PageRank.Length; i++)
-            {
-                UiInvoke(() => txtEditor.Text += string.Format("{0} ", PageRank[i]));
-            }
+            UiInvoke(() => MessageBox.Show(String.Format("Finish - PageRank jaccard on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
+
         }
         private double[] ResetRank(double[] temp)
         {
@@ -393,9 +408,7 @@ namespace FinalProject
             {
                 Dictionary<string, int>[] arrayDictionary;
                 arrayDictionary = KmeansReadData(FileBuff);
-                linesClusters = new int[linesNumber];
-                for (int i = 0; i < linesNumber; i++)
-                    linesClusters[i] = 0;
+
                 string question = "How many clusters do you want to create?";
                 int kValue;
                 kInputWindow kInput = new kInputWindow(question, linesNumber);
@@ -403,10 +416,8 @@ namespace FinalProject
                 if (kInput.DialogResult.HasValue && kInput.DialogResult.Value)
                 {
                     kValue = Convert.ToInt32(kInput.Answer);
-                    Dictionary<string, int>[] centroids = random_centroids(kValue, arrayDictionary);
-
-                    //int[] clustering = InitClustering(linesNumber, kValue); // semi-random initialization
-                    //double[] means = Allocate(kValue);
+                    int[] clustering = InitClustering(linesNumber, kValue); // semi-random initialization
+                    double[] means = Allocate(kValue);
                 }
             }
 
@@ -464,20 +475,12 @@ namespace FinalProject
             return clustering;
         }
 
-        private Dictionary<string, int>[] random_centroids(int K, Dictionary<string, int>[] arrayDict)
-        {
-            Random random = new Random(0);
-            int rand = 0;
-            Dictionary<string, int>[] centroids = new Dictionary<string, int>[K];
-            for (int i = 0; i < K; i++)
-            {
-                rand = random.Next(0, linesNumber);
-                centroids[i] = arrayDict[rand];
-                linesClusters[rand] = i;
-
-            }
-            return centroids;
-        }
+        //private void random_centroids(int K, Dictionary<string, int> arrayDict)
+        //{
+        //    Random random = new Random(0);
+        //    for (int i = numClusters; i < clustering.Length; i++)
+        //        clustering[i] = random.Next(0, numClusters); // other assignments random
+        //}
 
         private double[] Allocate(int numClusters)
         {
