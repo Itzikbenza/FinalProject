@@ -408,7 +408,6 @@ namespace FinalProject
             {
                 Dictionary<string, int>[] arrayDictionary;
                 arrayDictionary = KmeansReadData(FileBuff);
-
                 string question = "How many clusters do you want to create?";
                 int kValue;
                 kInputWindow kInput = new kInputWindow(question, linesNumber);
@@ -416,20 +415,13 @@ namespace FinalProject
                 if (kInput.DialogResult.HasValue && kInput.DialogResult.Value)
                 {
                     kValue = Convert.ToInt32(kInput.Answer);
-                    int[] clustering = InitClustering(linesNumber, kValue); // semi-random initialization
-                    double[] means = Allocate(kValue);
+                    List<int>[] linesClusters = new List<int>[kValue];
+                    linesClusters = initRandom(kValue);
+                    firstInit(linesClusters, kValue);
                 }
             }
 
         }
-        //k-means clustering
-        //public int[] Cluster(double[][] rawData, int numClusters)
-        //{
-        //    bool changed = true; // was there a change in at least one cluster assignment?
-        //    bool success = true; // were all means able to be computed? (no zero-count clusters)
-        //    int[] clustering = InitClustering(rawData.Length, numClusters); // semi-random initialization
-
-        //}
 
         private Dictionary<string, int>[] KmeansReadData(string FileBuff)
         {
@@ -447,7 +439,7 @@ namespace FinalProject
             foreach (string i in hash)
                 text_show += string.Format("{0} ", i);
 
-            text_show += string.Format("\nThe DataSet include {0} values", hash.Count.ToString());
+            text_show += string.Format("\nThe DataSet include {0} values\n", hash.Count.ToString());
             UiInvoke(() => txtEditor.Text = text_show);
 
             foreach (string key in hash)
@@ -464,31 +456,58 @@ namespace FinalProject
             return arr_dict;
         }
 
-        private int[] InitClustering(int lines, int numClusters)
+        private List<int>[] initRandom(int K)
         {
-            Random random = new Random(0);
-            int[] clustering = new int[lines];
-            for (int i = 0; i < numClusters; i++) // make sure each cluster has at least one item
-                clustering[i] = i;
-            for (int i = numClusters; i < clustering.Length; i++)
-                clustering[i] = random.Next(0, numClusters); // other assignments random
-            return clustering;
+            string print = "\n>>>>>>>>>>Init iteration<<<<<<<<<<\n";
+            Random random = new Random();
+            List<int>[] linesClast = new List<int>[K];
+            for (int i = 0; i < K; i++)
+            {
+                int rand = random.Next(0, linesNumber);
+                linesClast[i] = new List<int>();
+                linesClast[i].Add(rand);
+                print += string.Format("Line number {0} assigned to cluster number {1}\n", rand, i);
+            }
+            txtEditor.Text += print;
+            return linesClast;
         }
 
-        //private void random_centroids(int K, Dictionary<string, int> arrayDict)
-        //{
-        //    Random random = new Random(0);
-        //    for (int i = numClusters; i < clustering.Length; i++)
-        //        clustering[i] = random.Next(0, numClusters); // other assignments random
-        //}
-
-        private double[] Allocate(int numClusters)
+        private void firstInit(List<int>[] linesClust, int K)
         {
-            // convenience matrix allocator for Cluster()
-            double[] result = new double[numClusters];
-            for (int k = 0; k < numClusters; k++)
-                result[k] = 0.0;
-            return result;
+            double min;
+            int minRow, rightCluster;
+            int row;
+            for (int i = 0; i < linesNumber; i++)
+            {
+                minRow = linesClust[0].First();
+                min = CosineSimilarity[i][minRow];
+                rightCluster = 0;
+                for (int j = 1; j < K; j++)
+                {
+                    row = linesClust[j].First();
+                    if (CosineSimilarity[i][row] < min)
+                        rightCluster = j;
+                }
+                bool flag = true;
+                for (int n = 0; n < K; n++)
+                    if (i == linesClust[n].First())
+                    {
+                        flag = false;
+                        break;
+                    }
+                if (flag)
+                    linesClust[rightCluster].Add(i);
+            }
+
+            string print = "\n>>>>>>>>>>First iteration<<<<<<<<<<";
+            int counter = 0;
+            for (int i = 0; i < K; i++)
+            {
+                counter += linesClust[i].Count;
+                print += string.Format("\nCluster {0} have {1} values.", i, linesClust[i].Count);
+            }
+            print += string.Format("\n\nCount of lines: {0}", counter);
+            txtEditor.Text += print;
         }
     }
 
