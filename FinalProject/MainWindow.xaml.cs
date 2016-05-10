@@ -407,6 +407,7 @@ namespace FinalProject
             else
             {
                 Dictionary<string, int>[] arrayDictionary;
+                Dictionary<string, float>[] clustCentroid;
                 arrayDictionary = KmeansReadData(FileBuff);
                 string question = "How many clusters do you want to create?";
                 int kValue;
@@ -418,9 +419,9 @@ namespace FinalProject
                     List<int>[] linesClusters = new List<int>[kValue];
                     linesClusters = initRandom(kValue);
                     firstInit(linesClusters, kValue);
+                    clustCentroid = calcCentroids(linesClusters, arrayDictionary, kValue);
                 }
             }
-
         }
 
         private Dictionary<string, int>[] KmeansReadData(string FileBuff)
@@ -509,6 +510,36 @@ namespace FinalProject
             print += string.Format("\n\nCount of lines: {0}", counter);
             txtEditor.Text += print;
         }
+        private Dictionary<string, float>[] calcCentroids(List<int>[] linesClust, Dictionary<string, int>[] arrDict, int K)
+        {
+            float sum=0;
+            float avg=0;
+            Dictionary<string, float>[] centroidClust = new Dictionary<string, float>[K];
+            for (int i = 0; i < K; i++)
+            {
+                centroidClust[i] = new Dictionary<string, float>();
+                foreach (string key in arrDict[0].Keys)
+                {
+                    sum = 0;
+                    foreach (int item in linesClust[i])
+                    {
+                        sum += arrDict[item][key];
+                    }
+                    avg = sum / linesClust[i].Count;
+                    centroidClust[i].Add(key, avg);
+                }
+            }
+            string print = "\n\n>>>>>>>>>>The centroids<<<<<<<<<<";
+            for (int i = 0; i < K; i++)
+            {
+                print += string.Format("\nCentroid of cluster {0}:\n", i);
+                foreach (KeyValuePair<string, float> element in centroidClust[i])
+                {
+                    print += string.Format(" {0}->{1} ", element.Key, element.Value);
+                }
+            }
+            txtEditor.Text += print;
+            return centroidClust;
+        }
     }
-
 }
