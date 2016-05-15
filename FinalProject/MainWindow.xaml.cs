@@ -202,26 +202,26 @@ namespace FinalProject
                         arrayDictionaries[i][FileMatrix[i][j]] += 1;// cehck if the key is exsit in the line and up the value of the key
             
         }
-        public void calc_CosineSimilarity(Dictionary<string, int>[] arr_dict)
+        public void calc_CosineSimilarity(Dictionary<string, int>[] arrayDictionaries)
         {
             ShowHsahSet();
             CosineSimilarity = new float[linesNumber][];
             double numerator;
             double denominatorA, denominatorB;
-            for (int i = 0; i < arr_dict.Length; i++)
+            for (int i = 0; i < arrayDictionaries.Length; i++)
             {
                 CosineSimilarity[i] = new float[linesNumber];
-                for (int j = i; j < arr_dict.Length; j++)
+                for (int j = i; j < arrayDictionaries.Length; j++)
                 {
                     numerator = 0.0;
                     denominatorA = 0.0;
                     denominatorB = 0.0;
 
-                    foreach (var item in arr_dict[i])
+                    foreach (var item in arrayDictionaries[i])
                     {
-                        numerator += arr_dict[j][item.Key] * item.Value;
+                        numerator += arrayDictionaries[j][item.Key] * item.Value;
                         denominatorA += Math.Pow(item.Value, 2);
-                        denominatorB += Math.Pow(arr_dict[j][item.Key], 2);
+                        denominatorB += Math.Pow(arrayDictionaries[j][item.Key], 2);
                     }
                     if (denominatorA == 0 || denominatorB == 0) //checking Division by zero
                         CosineSimilarity[i][j] = 0;
@@ -432,12 +432,23 @@ namespace FinalProject
                 {
                     kValue = Convert.ToInt32(kInput.Answer);
                     List<int>[] linesClusters = new List<int>[kValue];
+                    bool hasChange = true;
+                    // >>> INIT ITERATION<<<
                     linesClusters = initRandom(kValue);
-                    firstInit(linesClusters, kValue);
-                    clustCentroid = calcCentroids(linesClusters, arrayDictionary, kValue);
+                    firstInitCosine(linesClusters, kValue);
+                    clustCentroid = initCentroids(linesClusters, arrayDictionary, kValue);
+                    int iteration = 1;
+                    while (hasChange)
+                    {
+                        hasChange = UpdateClusteringCosine(clustCentroid, arrayDictionary, linesClusters, kValue, iteration);
+                        clustCentroid = updateCentroids(clustCentroid, linesClusters, arrayDictionary, kValue);
+                        iteration++;
+                    }
+                    txtEditor.Text += string.Format("\n\n>>>>>>>>>>FINISH AFTER {0} ITERATIONS<<<<<<<<<<", iteration);
                 }
             }
         }
+
         private Dictionary<string, int>[] KmeansReadData(string FileBuff)
         {
             splitBySpacesAndLines(FileBuff);
@@ -470,6 +481,7 @@ namespace FinalProject
                         arrayDictionaries[i][FileMatrix[i][j]] += 1;// cehck if the key is exsit in the line and up the value of the key
             return arrayDictionaries;
         }
+
         private List<int>[] initRandom(int K)
         {
             string print = "\n>>>>>>>>>>Init iteration<<<<<<<<<<\n";
@@ -485,7 +497,8 @@ namespace FinalProject
             txtEditor.Text += print;
             return linesClast;
         }
-        private void firstInit(List<int>[] linesClust, int K)
+
+        private void firstInitCosine(List<int>[] linesClust, int K)
         {
             double min;
             int minRow, rightCluster;
@@ -512,7 +525,7 @@ namespace FinalProject
                     linesClust[rightCluster].Add(i);
             }
 
-            string print = "\n>>>>>>>>>>First iteration<<<<<<<<<<";
+            string print = "\n\n>>>>>>>>>>Initial placement<<<<<<<<<<";
             int counter = 0;
             for (int i = 0; i < K; i++)
             {
@@ -522,10 +535,10 @@ namespace FinalProject
             print += string.Format("\n\nCount of lines: {0}", counter);
             txtEditor.Text += print;
         }
-        private Dictionary<string, float>[] calcCentroids(List<int>[] linesClust, Dictionary<string, int>[] arrDict, int K)
+        private Dictionary<string, float>[] initCentroids(List<int>[] linesClust, Dictionary<string, int>[] arrDict, int K)
         {
-            float sum=0;
-            float avg=0;
+            float sum = 0;
+            float avg = 0;
             Dictionary<string, float>[] centroidClust = new Dictionary<string, float>[K];
             for (int i = 0; i < K; i++)
             {
@@ -544,7 +557,7 @@ namespace FinalProject
             string print = "\n\n>>>>>>>>>>The centroids<<<<<<<<<<";
             for (int i = 0; i < K; i++)
             {
-                print += string.Format("\nCentroid of cluster {0}:\n", i);
+                print += string.Format("\n\nCentroid of cluster {0}:\n", i);
                 foreach (KeyValuePair<string, float> element in centroidClust[i])
                 {
                     print += string.Format(" {0}->{1} ", element.Key, element.Value);
@@ -552,6 +565,117 @@ namespace FinalProject
             }
             txtEditor.Text += print;
             return centroidClust;
+        }
+
+        private Dictionary<string, float>[] updateCentroids(Dictionary<string, float>[] centroidClust, List<int>[] linesClust, Dictionary<string, int>[] arrDict, int K)
+        {
+            float sum = 0;
+            float avg = 0;
+            for (int i = 0; i < K; i++)
+            {
+                foreach (string key in arrDict[0].Keys)
+                {
+                    sum = 0;
+                    foreach (int item in linesClust[i])
+                    {
+                        sum += arrDict[item][key];
+                    }
+                    if (linesClust[i].Count == 0)
+                        avg = 0;
+                    else
+                        avg = sum / linesClust[i].Count;
+                    //try
+                    //{
+                    //    avg = sum / linesClust[i].Count;
+                    //}
+                    //catch (DivideByZeroException)
+                    //{
+                    //    MessageBox.Show("Error: division by zero", "Divide By Zero", MessageBoxButton.OK, MessageBoxImage.Error);
+                    //    avg = 0;
+                    //}
+
+                    centroidClust[i][key] = avg;
+                }
+            }
+            string print = "\n\n>>>>>>>>>>The centroids<<<<<<<<<<";
+            for (int i = 0; i < K; i++)
+            {
+                print += string.Format("\n\nCentroid of cluster {0}:\n", i);
+                foreach (KeyValuePair<string, float> element in centroidClust[i])
+                {
+                    print += string.Format(" {0}->{1} ", element.Key, element.Value);
+                }
+            }
+            txtEditor.Text += print;
+            return centroidClust;
+        }
+        private bool UpdateClusteringCosine(Dictionary<string, float>[] centroids, Dictionary<string, int>[] rowDict, List<int>[] lineClusters, int K, int iteration)
+        {
+            float minimum, cosineValue;
+            int rightCluster;
+            Dictionary<int, int> removeValues = new Dictionary<int, int>();
+            Dictionary<int, int> addValues = new Dictionary<int, int>();
+            bool hasChange = false, changeCluster = false;
+            string print = string.Format("\n\nIteration number {0}", iteration);
+            for (int i = 0; i < K; i++)
+            {
+                foreach (int item in lineClusters[i])
+                {
+                    minimum = calcCosineDictionary(rowDict[item], centroids[i]);
+                    rightCluster = i;
+                    for (int j = 0; j < K && j != i; j++)
+                    {
+                        cosineValue = calcCosineDictionary(rowDict[item], centroids[j]);
+                        if (cosineValue < minimum)
+                        {
+                            hasChange = true;
+                            changeCluster = true;
+                            rightCluster = j;
+                        }
+                    }
+                    if (changeCluster)
+                    {
+                        removeValues.Add(item, i);
+                        addValues.Add(item, rightCluster);
+                    }
+                    changeCluster = false;
+                }
+            }
+            foreach (KeyValuePair<int, int> element in addValues)
+            {
+                lineClusters[element.Value].Add(element.Key);
+                lineClusters[removeValues[element.Key]].Remove(element.Key);
+                //print += string.Format("\nRow number {0} passed from cluster {1} to cluster {2}.", element.Key, removeValues[element.Key], element.Value);
+            }
+            for (int i = 0; i < K; i++)
+            {
+                if (lineClusters[i].Count == 0)
+                    return false;
+            }
+            txtEditor.Text += print;
+            return hasChange;
+        }
+
+        private float calcCosineDictionary(Dictionary<string, int> row, Dictionary<string, float> centroid)
+        {
+            double numerator = 0, denominator = 0;
+            double Ai = 0, Bi = 0;
+            foreach (KeyValuePair<string, int> element in row)
+            {
+                numerator += row[element.Key] * centroid[element.Key];
+                Ai += Math.Pow(row[element.Key], 2);
+                Bi += Math.Pow(centroid[element.Key], 2);
+            }
+            denominator = Math.Sqrt(Ai) * Math.Sqrt(Bi);
+            try
+            {
+                return (float)(numerator / denominator);
+            }
+            catch (DivideByZeroException)
+            {
+                MessageBox.Show("Error: division by zero", "Divide By Zero", MessageBoxButton.OK, MessageBoxImage.Error);
+                return 0;
+            }
         }
     }
 }
