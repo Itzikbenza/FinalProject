@@ -31,11 +31,12 @@ namespace FinalProject
 
         float[][] Jdistance; //matrix of all jaccard distance values
         float[][] CosineSimilarity; //matrix of all cosine similarity values
-        Dictionary<string, int>[] arr_dict;
+        Dictionary<string, int>[] arrayDictionaries;
+        HashSet<string> hashSet =new HashSet<string>();
         int linesNumber; //size of rows
         string[][] FileMatrix; //matrix of the file readed
         string[] lines; //array of string - the lines of the file readed
-        int threadCounter = 3; //number of thread
+       
         Object thisLock = new Object(); //object lock critical section
         string FileBuff;
         int flag = 0;
@@ -54,13 +55,13 @@ namespace FinalProject
             {
                 FileBuff = File.ReadAllText(openFileDialog.FileName);
                 txtEditor.Text = FileBuff; //show the file on txt editor
+                NormalizationData(FileBuff);
                 jccard_button.IsEnabled = true;
                 cosine_button.IsEnabled = true;
                 lines = FileBuff.Split(new string[] { "\n", "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
                 linesNumber = lines.Length;
             }
         }
-
         public void splitBySpacesAndLines(string text)
         {
             lines = text.Split(new string[] { "\n", "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
@@ -69,56 +70,78 @@ namespace FinalProject
             for (int i = 0; i < linesNumber; i++)
                 FileMatrix[i] = lines[i].Split(new string[] { "\t", " " }, StringSplitOptions.RemoveEmptyEntries);
         }
-
-        public void calc_JDistance(int start, int end, int numOfThread)
+        public void calc_JDistance()
         {
-            IEnumerable<string> union, intersect;
-            float interCount = 0, unionCount = 0;
-            float[][] tempDis;
-            string[][] temp;
-            lock (thisLock)
+            int intersect = 0;
+            for (int i = 0; i < arrayDictionaries.Length; i++)
             {
-                temp = FileMatrix;
-                tempDis = Jdistance;
-            }
-
-            for (int i = start; i < end; i++)
-            {
-                Jdistance[i] = new float[linesNumber];
-                for (int j = i; j < linesNumber; j++)
+                for (int j = i; j < arrayDictionaries.Length; j++)
                 {
-                    union = temp[i].Union(temp[j]);
-                    unionCount = union.Count<string>();
-                    intersect = temp[i].Intersect(temp[j]);
-                    interCount = intersect.Count<string>();
-
-                    if (unionCount != 0)
-                        tempDis[i][j] = 1 - (interCount / unionCount);
-                    else
-                        tempDis[i][j] = 0;
+                    intersect = 0;
+                    foreach (KeyValuePair<string, int> item in arrayDictionaries[j])
+                    {
+                        if (arrayDictionaries[i][item.Key] > 0 && arrayDictionaries[j][item.Key] > 0)
+                            intersect += 1;
+                    }
+                    Jdistance[i][j] = intersect / arrayDictionaries.Length;
                 }
             }
-            lock (thisLock)
-            {
-                Array.Copy(tempDis, start, Jdistance, start, end - start);
-                threadCounter--;
-                UiInvoke(() => txtEditor.Text += "Thread number " + numOfThread + " is finish\n");
-                if (threadCounter == 0)
-                {
-                    for (int i = 0; i < linesNumber; i++)
-                        for (int j = 0; j < linesNumber; j++)
-                            if (Jdistance[i][j] == 0 && i != j)
-                                Jdistance[i][j] = Jdistance[j][i];
+            for (int i = 0; i < linesNumber; i++)
+                for (int j = 0; j < linesNumber; j++)
+                    if (Jdistance[i][j] == 0 && i != j)
+                        Jdistance[i][j] = Jdistance[j][i];
 
-                    timer.Stop();
-                    stopWatch.Stop();
-                    UiInvoke(() => MessageBox.Show(String.Format("Finish - Jaccard distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
-                    UiInvoke(() => txtEditor.Text = String.Join(" ", Jdistance[0].Select(p => p.ToString()).ToArray()));
-                    threadCounter = 3;
-                }
-            }
+            timer.Stop();
+            stopWatch.Stop();
+            UiInvoke(() => MessageBox.Show(String.Format("Finish - Jaccard distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
+            UiInvoke(() => txtEditor.Text = String.Join(" ", Jdistance[0].Select(p => p.ToString()).ToArray()));
         }
+            //IEnumerable<string> union, intersect;
+            //float interCount = 0, unionCount = 0;
+            //float[][] tempDis;
+            //string[][] temp;
+            //lock (thisLock)
+            //{
+            //    temp = FileMatrix;
+            //    tempDis = Jdistance;
+            //}
 
+            //for (int i = start; i < end; i++)
+            //{
+            //    Jdistance[i] = new float[linesNumber];
+            //    for (int j = i; j < linesNumber; j++)
+            //    {
+            //        union = temp[i].Union(temp[j]);
+            //        unionCount = union.Count<string>();
+            //        intersect = temp[i].Intersect(temp[j]);
+            //        interCount = intersect.Count<string>();
+
+            //        if (unionCount != 0)
+            //            tempDis[i][j] = 1 - (interCount / unionCount);
+            //        else
+            //            tempDis[i][j] = 0;
+            //    }
+            //}
+            //lock (thisLock)
+            //{
+            //    Array.Copy(tempDis, start, Jdistance, start, end - start);
+            //    threadCounter--;
+            //    UiInvoke(() => txtEditor.Text += "Thread number " + numOfThread + " is finish\n");
+            //    if (threadCounter == 0)
+            //    {
+            //        for (int i = 0; i < linesNumber; i++)
+            //            for (int j = 0; j < linesNumber; j++)
+            //                if (Jdistance[i][j] == 0 && i != j)
+            //                    Jdistance[i][j] = Jdistance[j][i];
+
+            //        timer.Stop();
+            //        stopWatch.Stop();
+            //        UiInvoke(() => MessageBox.Show(String.Format("Finish - Jaccard distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
+            //        UiInvoke(() => txtEditor.Text = String.Join(" ", Jdistance[0].Select(p => p.ToString()).ToArray()));
+            //        threadCounter = 3;
+            //    }
+            //}
+       
         private void jccard_button_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(FileBuff))
@@ -135,53 +158,53 @@ namespace FinalProject
                 splitBySpacesAndLines(FileBuff);
 
                 Jdistance = new float[linesNumber][];
+                for (int  i = 0 ; i < linesNumber ; i++ )
+                {
+                    Jdistance[i] = new float[linesNumber];
+                }
 
                 //Thread creation
-                Thread tt1 = new Thread(() => calc_JDistance(0, (int)(linesNumber * 0.2), 1));
-                Thread tt2 = new Thread(() => calc_JDistance((int)(linesNumber * 0.2), 2 * (int)(linesNumber * 0.2), 2));
-                Thread tt3 = new Thread(() => calc_JDistance(2 * (int)(linesNumber * 0.2), linesNumber, 3));
+                Thread tt1 = new Thread(() => calc_JDistance());
 
                 tt1.Start();
-                tt2.Start();
-                tt3.Start();
 
             }
         }
-
-        public void cosineReadData()
+        private void ShowHsahSet()
         {
-            HashSet<string> hashCosine = new HashSet<string>();
+            string text_show = null;
+            text_show = "The hash set include the values : ";
+            foreach (string i in hashSet)
+                text_show += string.Format("{0} ", i);
+
+            text_show += string.Format("\nThe hash set include {0} values", hashSet.Count.ToString());
+            UiInvoke(() => txtEditor.Text = text_show);
+        }
+        public void NormalizationData(string fileBuff)
+        {
             Dictionary<string, int> init_dict = new Dictionary<string, int>();//define defulat dictioanry for all the dataset
 
             splitBySpacesAndLines(FileBuff);
 
             for (int i = 0; i < linesNumber; i++)
                 for (int j = 0; j < FileMatrix[i].Length; j++)
-                    hashCosine.Add(FileMatrix[i][j]);
-
-            string text_show = null;
-            text_show = "The hash set include the values : ";
-            foreach (string i in hashCosine)
-                text_show += string.Format("{0} ", i);
-
-            text_show += string.Format("\nThe hash set include {0} values", hashCosine.Count.ToString());
-            UiInvoke(() => txtEditor.Text = text_show);
-
-            foreach (string key in hashCosine)
+                    hashSet.Add(FileMatrix[i][j]);
+            foreach (string key in hashSet)
                 init_dict[key] = 0;
 
-            arr_dict = new Dictionary<string, int>[linesNumber];
+            arrayDictionaries = new Dictionary<string, int>[linesNumber];
             for (int i = 0; i < linesNumber; i++)
-                arr_dict[i] = new Dictionary<string, int>(init_dict);// init array of dictionaris by the file 
+                arrayDictionaries[i] = new Dictionary<string, int>(init_dict);// init array of dictionaris by the file 
 
             for (int i = 0; i < linesNumber; i++)
                 for (int j = 0; j < FileMatrix[i].Length; j++)
-                    if (arr_dict[i].ContainsKey(FileMatrix[i][j]))
-                        arr_dict[i][FileMatrix[i][j]] += 1;// cehck if the key is exsit in the line and up the value of the key
+                    if (arrayDictionaries[i].ContainsKey(FileMatrix[i][j]))
+                        arrayDictionaries[i][FileMatrix[i][j]] += 1;// cehck if the key is exsit in the line and up the value of the key
+            
         }
-
         public void calc_CosineSimilarity(Dictionary<string, int>[] arr_dict)
         {
+            ShowHsahSet();
             CosineSimilarity = new float[linesNumber][];
             double numerator;
             double denominatorA, denominatorB;
@@ -231,16 +254,13 @@ namespace FinalProject
                 stopWatch.Start();
                 timer.Start();
                 txtEditor.Clear();
+               // cosineReadData();
 
-                cosineReadData();
-
-                Thread cosine_thread = new Thread(() => calc_CosineSimilarity(arr_dict));
+                Thread cosine_thread = new Thread(() => calc_CosineSimilarity(arrayDictionaries));
                 cosine_thread.Start();
-                //cosine_thread.Join();
 
             }
         }
-
         void dt_Tick(object sender, EventArgs e)
         {
             if (stopWatch.IsRunning)
@@ -251,9 +271,9 @@ namespace FinalProject
                 ClockTextBlock.Text = currentTime;
             }
         }
-
         private void calc_pageRank_jdistance()
         {
+
             stopWatch.Reset();
             stopWatch.Start();
             timer.Start();
@@ -277,9 +297,7 @@ namespace FinalProject
                 {
                     for (int j = 0; j < linesNumber; j++)
                     {
-                        //newPageRank[i] += d*(Jdistance[i][j] * PageRank[j])+ (1-d)/linesNumber;
-                        //newPageRank[i] +=  Jdistance[i][j] * PageRank[j];
-                        newPageRank[i] += (d * Jdistance[i][j] + (1 - d) / linesNumber) * PageRank[j];
+                        newPageRank[i] +=  (Jdistance[i][j] * PageRank[j]);
                     }
                 }
                 for (int k = 0; k < linesNumber; k++)
@@ -306,7 +324,6 @@ namespace FinalProject
             UiInvoke(() => MessageBox.Show(String.Format("Finish - PageRank jaccard on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
 
         }
-
         private void calc_pageRank_cosineSimilarity()
         {
             stopWatch.Reset();
@@ -332,7 +349,7 @@ namespace FinalProject
                 {
                     for (int j = 0; j < linesNumber; j++)
                     {
-                        newPageRank[i] += d * (CosineSimilarity[i][j] * PageRank[j]) + (1 - d) / linesNumber;
+                        newPageRank[i] +=  CosineSimilarity[i][j] * PageRank[j];
                     }
                 }
                 for (int k = 0; k < linesNumber; k++)
@@ -385,7 +402,6 @@ namespace FinalProject
             }
             return temp;
         }
-
         private void PageRank_button_Click(object sender, RoutedEventArgs e)
         {
             if (flag == 1)
@@ -399,7 +415,6 @@ namespace FinalProject
                 pagerank_cosine_thread.Start();
             }
         }
-
         private void kmeans_button_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(FileBuff))
@@ -423,7 +438,6 @@ namespace FinalProject
                 }
             }
         }
-
         private Dictionary<string, int>[] KmeansReadData(string FileBuff)
         {
             splitBySpacesAndLines(FileBuff);
@@ -446,17 +460,16 @@ namespace FinalProject
             foreach (string key in hash)
                 init_dict[key] = 0;
 
-            arr_dict = new Dictionary<string, int>[linesNumber];
+            arrayDictionaries = new Dictionary<string, int>[linesNumber];
             for (int i = 0; i < linesNumber; i++)
-                arr_dict[i] = new Dictionary<string, int>(init_dict);// init array of dictionaris by the file 
+                arrayDictionaries[i] = new Dictionary<string, int>(init_dict);// init array of dictionaris by the file 
 
             for (int i = 0; i < linesNumber; i++)
                 for (int j = 0; j < FileMatrix[i].Length; j++)
-                    if (arr_dict[i].ContainsKey(FileMatrix[i][j]))
-                        arr_dict[i][FileMatrix[i][j]] += 1;// cehck if the key is exsit in the line and up the value of the key
-            return arr_dict;
+                    if (arrayDictionaries[i].ContainsKey(FileMatrix[i][j]))
+                        arrayDictionaries[i][FileMatrix[i][j]] += 1;// cehck if the key is exsit in the line and up the value of the key
+            return arrayDictionaries;
         }
-
         private List<int>[] initRandom(int K)
         {
             string print = "\n>>>>>>>>>>Init iteration<<<<<<<<<<\n";
@@ -472,7 +485,6 @@ namespace FinalProject
             txtEditor.Text += print;
             return linesClast;
         }
-
         private void firstInit(List<int>[] linesClust, int K)
         {
             double min;
