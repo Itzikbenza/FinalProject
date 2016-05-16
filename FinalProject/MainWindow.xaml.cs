@@ -9,6 +9,7 @@ using System.Windows.Threading;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Windows.Input;
+using System.Threading.Tasks;
 
 namespace FinalProject
 {
@@ -20,9 +21,9 @@ namespace FinalProject
         public Window1()
         {
             InitializeComponent();
+            //TIMER
             timer.Tick += new EventHandler(dt_Tick);
             timer.Interval = new TimeSpan(0, 0, 0, 0, 1);
-
         }
 
         DispatcherTimer timer = new DispatcherTimer();
@@ -30,36 +31,80 @@ namespace FinalProject
         string currentTime;
 
         float[][] Jdistance; //matrix of all jaccard distance values
-        float[][] CosineSimilarity; //matrix of all cosine similarity values
-        Dictionary<string, int>[] arrayDictionaries;
-        HashSet<string> hashSet =new HashSet<string>();
+        float[][] CosineDistance; //matrix of all cosine similarity values
+        Dictionary<string, int>[] arrayDictionaries; //array of dictionaries --> to represent the vectors
+        HashSet<string> hashSet = new HashSet<string>(); //HashSet of the file values
         int linesNumber; //size of rows
         string[][] FileMatrix; //matrix of the file readed
         string[] lines; //array of string - the lines of the file readed
-       
+        string FileBuff; //buffer of the file readed
+        int flag = 0; //flag for which algoritem was start
+        bool chooseFile = false;
+
         Object thisLock = new Object(); //object lock critical section
-        string FileBuff;
-        int flag = 0;
+
 
         //INVOKE
         public static void UiInvoke(Action a)
         {
             Application.Current.Dispatcher.Invoke(a);
         }
+        //TIMER
+        void dt_Tick(object sender, EventArgs e)
+        {
+            if (stopWatch.IsRunning)
+            {
+                TimeSpan ts = stopWatch.Elapsed;
+                currentTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                    ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds / 10);
+                ClockTextBlock.Text = currentTime;
+            }
+        }
         //Open DataSet file
         private void Open_File_Click(object sender, RoutedEventArgs e)
         {
-            //string FileBuff; //buffer for read the file
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            if (openFileDialog.ShowDialog() == true)
+            //try
+            //{
+            //    OpenFileDialog openFileDialog = new OpenFileDialog();
+            //    if (openFileDialog.ShowDialog() == true)
+            //    {
+            //        using (StreamReader sr = new StreamReader(openFileDialog.FileName))
+            //        {
+            //            String text = await sr.ReadToEndAsync();
+            //            UiInvoke(() => txtEditor.Text = text);
+            //        }
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    UiInvoke(() => txtEditor.Text = "Could not read the file");
+            //}
+            Thread readFile = new Thread(() => dataSet_read_file());
+            readFile.Start();
+            jccard_button.IsEnabled = true;
+            cosine_button.IsEnabled = true;
+        }
+        public async void dataSet_read_file()
+        {
+            try
             {
-                FileBuff = File.ReadAllText(openFileDialog.FileName);
-                txtEditor.Text = FileBuff; //show the file on txt editor
-                NormalizationData(FileBuff);
-                jccard_button.IsEnabled = true;
-                cosine_button.IsEnabled = true;
-                lines = FileBuff.Split(new string[] { "\n", "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-                linesNumber = lines.Length;
+                OpenFileDialog openFileDialog = new OpenFileDialog();
+                if (openFileDialog.ShowDialog() == true)
+                {
+                    using (StreamReader sr = new StreamReader(openFileDialog.FileName))
+                    {
+                        FileBuff = await sr.ReadToEndAsync();
+                        flag = 0;
+                        chooseFile = true;
+                        UiInvoke(() => jccard_button.IsEnabled = true);
+                        UiInvoke(() => cosine_button.IsEnabled = true);
+                        UiInvoke(() => txtEditor.Text = FileBuff);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                UiInvoke(() => txtEditor.Text = "Could not read the file");
             }
         }
         public void splitBySpacesAndLines(string text)
@@ -72,117 +117,114 @@ namespace FinalProject
         }
         public void calc_JDistance()
         {
-            int intersect = 0;
-            for (int i = 0; i < arrayDictionaries.Length; i++)
+            float intersect, union;
+            Jdistance = new float[linesNumber][];
+            for (int i = 0; i < linesNumber; i++)
             {
-                for (int j = i; j < arrayDictionaries.Length; j++)
+                Jdistance[i] = new float[linesNumber];
+                for (int j = i; j < linesNumber; j++)
                 {
                     intersect = 0;
+                    union = 0;
                     foreach (KeyValuePair<string, int> item in arrayDictionaries[j])
                     {
                         if (arrayDictionaries[i][item.Key] > 0 && arrayDictionaries[j][item.Key] > 0)
-                            intersect += 1;
+                            intersect++;
+                        if (arrayDictionaries[i][item.Key] > 0 || arrayDictionaries[j][item.Key] > 0)
+                            union++;
                     }
-                    Jdistance[i][j] = intersect / arrayDictionaries.Length;
+                    Jdistance[i][j] = 1 - intersect / union;
                 }
             }
             for (int i = 0; i < linesNumber; i++)
-                for (int j = 0; j < linesNumber; j++)
-                    if (Jdistance[i][j] == 0 && i != j)
+                for (int j = 0; i > j; j++)
+                    if (Jdistance[i][j] == 0)
                         Jdistance[i][j] = Jdistance[j][i];
-
+            // After finish jaccard calculates
             timer.Stop();
             stopWatch.Stop();
             UiInvoke(() => MessageBox.Show(String.Format("Finish - Jaccard distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
-            UiInvoke(() => txtEditor.Text = String.Join(" ", Jdistance[0].Select(p => p.ToString()).ToArray()));
+            UiInvoke(() => txtEditor.Text = String.Join(" | ", Jdistance[0].Select(p => p.ToString()).ToArray()));
+            UiInvoke(() => kmeans_button.IsEnabled = true);
+            UiInvoke(() => PageRank_button.IsEnabled = true);
         }
-            //IEnumerable<string> union, intersect;
-            //float interCount = 0, unionCount = 0;
-            //float[][] tempDis;
-            //string[][] temp;
-            //lock (thisLock)
-            //{
-            //    temp = FileMatrix;
-            //    tempDis = Jdistance;
-            //}
+        //IEnumerable<string> union, intersect;
+        //float interCount = 0, unionCount = 0;
+        //float[][] tempDis;
+        //string[][] temp;
+        //lock (thisLock)
+        //{
+        //    temp = FileMatrix;
+        //    tempDis = Jdistance;
+        //}
 
-            //for (int i = start; i < end; i++)
-            //{
-            //    Jdistance[i] = new float[linesNumber];
-            //    for (int j = i; j < linesNumber; j++)
-            //    {
-            //        union = temp[i].Union(temp[j]);
-            //        unionCount = union.Count<string>();
-            //        intersect = temp[i].Intersect(temp[j]);
-            //        interCount = intersect.Count<string>();
+        //for (int i = start; i < end; i++)
+        //{
+        //    Jdistance[i] = new float[linesNumber];
+        //    for (int j = i; j < linesNumber; j++)
+        //    {
+        //        union = temp[i].Union(temp[j]);
+        //        unionCount = union.Count<string>();
+        //        intersect = temp[i].Intersect(temp[j]);
+        //        interCount = intersect.Count<string>();
 
-            //        if (unionCount != 0)
-            //            tempDis[i][j] = 1 - (interCount / unionCount);
-            //        else
-            //            tempDis[i][j] = 0;
-            //    }
-            //}
-            //lock (thisLock)
-            //{
-            //    Array.Copy(tempDis, start, Jdistance, start, end - start);
-            //    threadCounter--;
-            //    UiInvoke(() => txtEditor.Text += "Thread number " + numOfThread + " is finish\n");
-            //    if (threadCounter == 0)
-            //    {
-            //        for (int i = 0; i < linesNumber; i++)
-            //            for (int j = 0; j < linesNumber; j++)
-            //                if (Jdistance[i][j] == 0 && i != j)
-            //                    Jdistance[i][j] = Jdistance[j][i];
+        //        if (unionCount != 0)
+        //            tempDis[i][j] = 1 - (interCount / unionCount);
+        //        else
+        //            tempDis[i][j] = 0;
+        //    }
+        //}
+        //lock (thisLock)
+        //{
+        //    Array.Copy(tempDis, start, Jdistance, start, end - start);
+        //    threadCounter--;
+        //    UiInvoke(() => txtEditor.Text += "Thread number " + numOfThread + " is finish\n");
+        //    if (threadCounter == 0)
+        //    {
+        //        for (int i = 0; i < linesNumber; i++)
+        //            for (int j = 0; j < linesNumber; j++)
+        //                if (Jdistance[i][j] == 0 && i != j)
+        //                    Jdistance[i][j] = Jdistance[j][i];
 
-            //        timer.Stop();
-            //        stopWatch.Stop();
-            //        UiInvoke(() => MessageBox.Show(String.Format("Finish - Jaccard distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
-            //        UiInvoke(() => txtEditor.Text = String.Join(" ", Jdistance[0].Select(p => p.ToString()).ToArray()));
-            //        threadCounter = 3;
-            //    }
-            //}
-       
-        private void jccard_button_Click(object sender, RoutedEventArgs e)
+        //        timer.Stop();
+        //        stopWatch.Stop();
+        //        UiInvoke(() => MessageBox.Show(String.Format("Finish - Jaccard distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
+        //        UiInvoke(() => txtEditor.Text = String.Join(" ", Jdistance[0].Select(p => p.ToString()).ToArray()));
+        //        threadCounter = 3;
+        //    }
+        //}
+
+        private void jaccard_button_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(FileBuff))
+            if (chooseFile == false || string.IsNullOrEmpty(FileBuff))
                 MessageBox.Show("Please choose some DataSet by clicking on Browse button", "Error", MessageBoxButton.OK, MessageBoxImage.Information);
-            else
+            if (chooseFile == true)
             {
-                jccard_button.IsEnabled = false;
-                cosine_button.IsEnabled = false;
-                currentTime = string.Empty;
-                flag = 1;
-                stopWatch.Reset();
-                stopWatch.Start();
-                timer.Start();
-                splitBySpacesAndLines(FileBuff);
-
-                Jdistance = new float[linesNumber][];
-                for (int  i = 0 ; i < linesNumber ; i++ )
-                {
-                    Jdistance[i] = new float[linesNumber];
-                }
+                jaccard_init();
 
                 //Thread creation
-                Thread tt1 = new Thread(() => calc_JDistance());
-
-                tt1.Start();
-
+                Thread normalizeThread = new Thread(() => NormalizationData(FileBuff));
+                Thread jDistanceThread = new Thread(() => calc_JDistance());
+                normalizeThread.Start();
+                normalizeThread.Join();
+                ShowHsahSet();
+                jDistanceThread.Start();
             }
         }
-        private void ShowHsahSet()
+        private void jaccard_init()
         {
-            string text_show = null;
-            text_show = "The hash set include the values : ";
-            foreach (string i in hashSet)
-                text_show += string.Format("{0} ", i);
-
-            text_show += string.Format("\nThe hash set include {0} values", hashSet.Count.ToString());
-            UiInvoke(() => txtEditor.Text = text_show);
+            jccard_button.IsEnabled = false;
+            cosine_button.IsEnabled = false;
+            currentTime = string.Empty;
+            flag = 1; //jaccard flag
+            stopWatch.Reset();
+            stopWatch.Start();
+            timer.Start();
         }
+
         public void NormalizationData(string fileBuff)
         {
-            Dictionary<string, int> init_dict = new Dictionary<string, int>();//define defulat dictioanry for all the dataset
+            Dictionary<string, int> init_dict = new Dictionary<string, int>(); //define defulat dictioanry for all the dataset
 
             splitBySpacesAndLines(FileBuff);
 
@@ -200,80 +242,85 @@ namespace FinalProject
                 for (int j = 0; j < FileMatrix[i].Length; j++)
                     if (arrayDictionaries[i].ContainsKey(FileMatrix[i][j]))
                         arrayDictionaries[i][FileMatrix[i][j]] += 1;// cehck if the key is exsit in the line and up the value of the key
-            
+
         }
-        public void calc_CosineSimilarity(Dictionary<string, int>[] arrayDictionaries)
+        private void ShowHsahSet()
         {
-            ShowHsahSet();
-            CosineSimilarity = new float[linesNumber][];
+            string print = ">>>>>>>>>>The DateSet values<<<<<<<<<<\n";
+            foreach (string i in hashSet)
+                print += string.Format("{0} ", i);
+
+            print += string.Format("\n\nThe DataSet include {0} values", hashSet.Count.ToString());
+            UiInvoke(() => txtEditor.Text = print);
+        }
+        public void calc_CosineSimilarity()
+        {
             double numerator;
             double denominatorA, denominatorB;
-            for (int i = 0; i < arrayDictionaries.Length; i++)
-            {
-                CosineSimilarity[i] = new float[linesNumber];
-                for (int j = i; j < arrayDictionaries.Length; j++)
-                {
-                    numerator = 0.0;
-                    denominatorA = 0.0;
-                    denominatorB = 0.0;
+            CosineDistance = new float[linesNumber][];
 
-                    foreach (var item in arrayDictionaries[i])
+            for (int i = 0; i < linesNumber; i++)
+            {
+                CosineDistance[i] = new float[linesNumber];
+                for (int j = i; j < linesNumber; j++)
+                {
+                    numerator = 0;
+                    denominatorA = 0;
+                    denominatorB = 0;
+
+                    foreach (KeyValuePair<string, int> item in arrayDictionaries[i])
                     {
                         numerator += arrayDictionaries[j][item.Key] * item.Value;
                         denominatorA += Math.Pow(item.Value, 2);
                         denominatorB += Math.Pow(arrayDictionaries[j][item.Key], 2);
                     }
                     if (denominatorA == 0 || denominatorB == 0) //checking Division by zero
-                        CosineSimilarity[i][j] = 0;
+                        CosineDistance[i][j] = 0;
                     else
-                        CosineSimilarity[i][j] = 1 - ((float)(numerator / (Math.Sqrt(denominatorA) * Math.Sqrt(denominatorB))));
+                        CosineDistance[i][j] = 1 - ((float)(numerator / (Math.Sqrt(denominatorA) * Math.Sqrt(denominatorB))));
                 }
             }
             for (int i = 0; i < linesNumber; i++)
-                for (int j = 0; j < linesNumber; j++)
-                    if (CosineSimilarity[i][j] == 0.0 && i != j)
-                        CosineSimilarity[i][j] = CosineSimilarity[j][i];
-            UiInvoke(() => txtEditor.Clear());
+                for (int j = 0; i > j; j++)
+                    if (CosineDistance[i][j] == 0.0)
+                        CosineDistance[i][j] = CosineDistance[j][i];
+            // After finish cosine calculates
             timer.Stop();
             stopWatch.Stop();
             UiInvoke(() => MessageBox.Show(String.Format("Finish - Cosine similarity on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
-
+            UiInvoke(() => txtEditor.Text = String.Join(" | ", CosineDistance[0].Select(p => p.ToString()).ToArray()));
+            UiInvoke(() => kmeans_button.IsEnabled = true);
+            UiInvoke(() => PageRank_button.IsEnabled = true);
         }
         private void cosine_button_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(FileBuff))
+            if (chooseFile == false || string.IsNullOrEmpty(FileBuff))
                 MessageBox.Show("Please choose some DataSet by clicking on Browse button", "Error", MessageBoxButton.OK, MessageBoxImage.Information);
-            else
+            if (chooseFile == true)
             {
-                //initials
-                cosine_button.IsEnabled = false;
-                jccard_button.IsEnabled = false;
-                currentTime = string.Empty;
-                flag = 2;
-                stopWatch.Reset();
-                stopWatch.Start();
-                timer.Start();
-                txtEditor.Clear();
-               // cosineReadData();
+                cosine_init();
 
-                Thread cosine_thread = new Thread(() => calc_CosineSimilarity(arrayDictionaries));
-                cosine_thread.Start();
-
+                //Thread creation
+                Thread normalizeThread = new Thread(() => NormalizationData(FileBuff));
+                Thread cosineDistanceThread = new Thread(() => calc_CosineSimilarity());
+                normalizeThread.Start();
+                normalizeThread.Join();
+                ShowHsahSet();
+                cosineDistanceThread.Start();
             }
         }
-        void dt_Tick(object sender, EventArgs e)
+        private void cosine_init()
         {
-            if (stopWatch.IsRunning)
-            {
-                TimeSpan ts = stopWatch.Elapsed;
-                currentTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
-                    ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds / 10);
-                ClockTextBlock.Text = currentTime;
-            }
+            jccard_button.IsEnabled = false;
+            cosine_button.IsEnabled = false;
+            currentTime = string.Empty;
+            flag = 2; //Cosine flag
+            stopWatch.Reset();
+            stopWatch.Start();
+            timer.Start();
         }
         private void calc_pageRank_jdistance()
         {
-
             stopWatch.Reset();
             stopWatch.Start();
             timer.Start();
@@ -297,7 +344,7 @@ namespace FinalProject
                 {
                     for (int j = 0; j < linesNumber; j++)
                     {
-                        newPageRank[i] +=  (Jdistance[i][j] * PageRank[j]);
+                        newPageRank[i] += (Jdistance[i][j] * PageRank[j]);
                     }
                 }
                 for (int k = 0; k < linesNumber; k++)
@@ -349,7 +396,7 @@ namespace FinalProject
                 {
                     for (int j = 0; j < linesNumber; j++)
                     {
-                        newPageRank[i] +=  CosineSimilarity[i][j] * PageRank[j];
+                        newPageRank[i] += CosineDistance[i][j] * PageRank[j];
                     }
                 }
                 for (int k = 0; k < linesNumber; k++)
@@ -417,73 +464,134 @@ namespace FinalProject
         }
         private void kmeans_button_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(FileBuff))
-                MessageBox.Show("Please choose some DataSet by clicking on Browse button", "Error", MessageBoxButton.OK, MessageBoxImage.Information);
-            else
+            string question = "How many clusters do you want to create?";
+            int kValue;
+            kInputWindow kInput = new kInputWindow(question, linesNumber);
+            kInput.ShowDialog();
+            if (kInput.DialogResult.HasValue && kInput.DialogResult.Value)
             {
-                Dictionary<string, int>[] arrayDictionary;
-                Dictionary<string, float>[] clustCentroid;
-                arrayDictionary = KmeansReadData(FileBuff);
-                string question = "How many clusters do you want to create?";
-                int kValue;
-                kInputWindow kInput = new kInputWindow(question, linesNumber);
-                kInput.ShowDialog();
-                if (kInput.DialogResult.HasValue && kInput.DialogResult.Value)
+                ////Start TIMER
+                //stopWatch.Reset();
+                //stopWatch.Start();
+                //timer.Start();
+                kValue = Convert.ToInt32(kInput.Answer); // K input
+                List<int>[] linesClusters; //array of list ins size of K, each list have the lines of the cluster
+                bool hasChange = true; //bool flag, if was a cluster change
+                Dictionary<string, float>[] clustCentroid = new Dictionary<string, float>[kValue];   //##################
+
+                //Start TIMER
+                stopWatch.Reset();
+                stopWatch.Start();
+                timer.Start();
+                // >>> INIT ITERATION<<<
+                linesClusters = initRandom(kValue);
+                int iteration = 1;
+                //if (flag==1) //if Jaccard Distance algorithm was run
+                //{
+                //    //Thread jaccardKmeansThread = new Thread(() => kmeans_jaccard(linesClusters, clustCentroid, kValue, iteration, hasChange));
+                //    //jaccardKmeansThread.Start();
+                //    firstInitJaccard(linesClusters, kValue);
+                //    clustCentroid = initCentroids(linesClusters, kValue);
+                //    while (hasChange)
+                //    {
+                //        hasChange = UpdateClusteringJaccard(clustCentroid, linesClusters, kValue, iteration);
+                //        clustCentroid = updateCentroids(clustCentroid, linesClusters, kValue);
+                //        iteration++;
+                //    }
+                //    txtEditor.Text += string.Format("\n\n>>>>>>>>>>FINISH AFTER {0} ITERATIONS<<<<<<<<<<", iteration);
+                //    //Stop TIMER
+                //    timer.Stop();
+                //    stopWatch.Stop();
+                //    MessageBox.Show(String.Format("Finish - K-Means of Jaccard on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information);
+                //}
+                if (flag == 2) //if Cosine Distance algorithm was run
                 {
-                    kValue = Convert.ToInt32(kInput.Answer);
-                    List<int>[] linesClusters = new List<int>[kValue];
-                    bool hasChange = true;
-                    // >>> INIT ITERATION<<<
-                    linesClusters = initRandom(kValue);
-                    firstInitCosine(linesClusters, kValue);
-                    clustCentroid = initCentroids(linesClusters, arrayDictionary, kValue);
-                    int iteration = 1;
-                    while (hasChange)
-                    {
-                        hasChange = UpdateClusteringCosine(clustCentroid, arrayDictionary, linesClusters, kValue, iteration);
-                        clustCentroid = updateCentroids(clustCentroid, linesClusters, arrayDictionary, kValue);
-                        iteration++;
-                    }
-                    txtEditor.Text += string.Format("\n\n>>>>>>>>>>FINISH AFTER {0} ITERATIONS<<<<<<<<<<", iteration);
+                    Thread cosineKmeansThread = new Thread(() => kmeans_cosine(linesClusters, clustCentroid, kValue, iteration, hasChange));
+                    cosineKmeansThread.Start();
+                    //firstInitCosine(linesClusters, kValue);
+                    //clustCentroid = initCentroids(linesClusters, kValue);
+                    //while (hasChange && iteration<10)
+                    //{
+                    //    hasChange = UpdateClusteringCosine(clustCentroid, linesClusters, kValue, iteration);
+                    //    clustCentroid = updateCentroids(clustCentroid, linesClusters, kValue);
+                    //    iteration++;
+                    //}
+                    //txtEditor.Text += string.Format("\n\n>>>>>>>>>>FINISH AFTER {0} ITERATIONS<<<<<<<<<<", iteration);
+                    //////Stop TIMER
+                    ////timer.Stop();
+                    ////stopWatch.Stop();
+                    //MessageBox.Show(String.Format("Finish - K-Means of Cosine on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
         }
-
-        private Dictionary<string, int>[] KmeansReadData(string FileBuff)
+        private void kmeans_jaccard(List<int>[] linesClusters, Dictionary<string, float>[] clustCentroid, int kValue, int iteration, bool hasChange)
         {
-            splitBySpacesAndLines(FileBuff);
-
-            HashSet<string> hash = new HashSet<string>();
-            Dictionary<string, int> init_dict = new Dictionary<string, int>();//define defulat dictioanry for all the dataset
-
-            for (int i = 0; i < linesNumber; i++)
-                for (int j = 0; j < FileMatrix[i].Length; j++)
-                    hash.Add(FileMatrix[i][j]);
-
-            string text_show = null;
-            text_show = "The DataSet include the values : ";
-            foreach (string i in hash)
-                text_show += string.Format("{0} ", i);
-
-            text_show += string.Format("\nThe DataSet include {0} values\n", hash.Count.ToString());
-            UiInvoke(() => txtEditor.Text = text_show);
-
-            foreach (string key in hash)
-                init_dict[key] = 0;
-
-            arrayDictionaries = new Dictionary<string, int>[linesNumber];
-            for (int i = 0; i < linesNumber; i++)
-                arrayDictionaries[i] = new Dictionary<string, int>(init_dict);// init array of dictionaris by the file 
-
-            for (int i = 0; i < linesNumber; i++)
-                for (int j = 0; j < FileMatrix[i].Length; j++)
-                    if (arrayDictionaries[i].ContainsKey(FileMatrix[i][j]))
-                        arrayDictionaries[i][FileMatrix[i][j]] += 1;// cehck if the key is exsit in the line and up the value of the key
-            return arrayDictionaries;
+            firstInitJaccard(linesClusters, kValue);
+            clustCentroid = initCentroids(linesClusters, kValue);
+            while (hasChange)
+            {
+                hasChange = UpdateClusteringJaccard(clustCentroid, linesClusters, kValue, iteration);
+                clustCentroid = updateCentroids(clustCentroid, linesClusters, kValue);
+                iteration++;
+            }
+            UiInvoke(() => txtEditor.Text += string.Format("\n\n>>>>>>>>>>FINISH AFTER {0} ITERATIONS<<<<<<<<<<", iteration));
+            //Stop TIMER
+            timer.Stop();
+            stopWatch.Stop();
+            UiInvoke(() => MessageBox.Show(String.Format("Finish - K-Means of Jaccard on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
         }
+        private void kmeans_cosine(List<int>[] linesClusters, Dictionary<string, float>[] clustCentroid, int kValue, int iteration, bool hasChange)
+        {      
+            firstInitCosine(linesClusters, kValue);
+            clustCentroid = initCentroids(linesClusters, kValue);
+            while (hasChange && iteration<50)
+            {
+                hasChange = UpdateClusteringCosine(clustCentroid, linesClusters, kValue, iteration);
+                clustCentroid = updateCentroids(clustCentroid, linesClusters, kValue);
+                iteration++;
+            }
+            UiInvoke(() => txtEditor.Text += string.Format("\n\n>>>>>>>>>>FINISH AFTER {0} ITERATIONS<<<<<<<<<<", iteration));
+            //Stop TIMER
+            timer.Stop();
+            stopWatch.Stop();
+            UiInvoke(() => MessageBox.Show(String.Format("Finish - K-Means of Cosine on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
+        }
+        //private Dictionary<string, int>[] KmeansReadData(string FileBuff)
+        //{
+        //    splitBySpacesAndLines(FileBuff);
+
+        //    HashSet<string> hash = new HashSet<string>();
+        //    Dictionary<string, int> init_dict = new Dictionary<string, int>();//define defulat dictioanry for all the dataset
+
+        //    for (int i = 0; i < linesNumber; i++)
+        //        for (int j = 0; j < FileMatrix[i].Length; j++)
+        //            hash.Add(FileMatrix[i][j]);
+
+        //    string text_show = null;
+        //    text_show = "The DataSet include the values : ";
+        //    foreach (string i in hash)
+        //        text_show += string.Format("{0} ", i);
+
+        //    text_show += string.Format("\nThe DataSet include {0} values\n", hash.Count.ToString());
+        //    UiInvoke(() => txtEditor.Text = text_show);
+
+        //    foreach (string key in hash)
+        //        init_dict[key] = 0;
+
+        //    arrayDictionaries = new Dictionary<string, int>[linesNumber];
+        //    for (int i = 0; i < linesNumber; i++)
+        //        arrayDictionaries[i] = new Dictionary<string, int>(init_dict);// init array of dictionaris by the file 
+
+        //    for (int i = 0; i < linesNumber; i++)
+        //        for (int j = 0; j < FileMatrix[i].Length; j++)
+        //            if (arrayDictionaries[i].ContainsKey(FileMatrix[i][j]))
+        //                arrayDictionaries[i][FileMatrix[i][j]] += 1;// cehck if the key is exsit in the line and up the value of the key
+        //    return arrayDictionaries;
+        //}
 
         private List<int>[] initRandom(int K)
         {
+            
             string print = "\n>>>>>>>>>>Init iteration<<<<<<<<<<\n";
             Random random = new Random();
             List<int>[] linesClast = new List<int>[K];
@@ -494,10 +602,9 @@ namespace FinalProject
                 linesClast[i].Add(rand);
                 print += string.Format("Line number {0} assigned to cluster number {1}\n", rand, i);
             }
-            txtEditor.Text += print;
+            UiInvoke(() => txtEditor.Text = print);
             return linesClast;
         }
-
         private void firstInitCosine(List<int>[] linesClust, int K)
         {
             double min;
@@ -506,12 +613,12 @@ namespace FinalProject
             for (int i = 0; i < linesNumber; i++)
             {
                 minRow = linesClust[0].First();
-                min = CosineSimilarity[i][minRow];
+                min = CosineDistance[i][minRow];
                 rightCluster = 0;
                 for (int j = 1; j < K; j++)
                 {
                     row = linesClust[j].First();
-                    if (CosineSimilarity[i][row] < min)
+                    if (CosineDistance[i][row] < min)
                         rightCluster = j;
                 }
                 bool flag = true;
@@ -533,9 +640,46 @@ namespace FinalProject
                 print += string.Format("\nCluster {0} have {1} values.", i, linesClust[i].Count);
             }
             print += string.Format("\n\nCount of lines: {0}", counter);
-            txtEditor.Text += print;
+            UiInvoke(() => txtEditor.Text += print);
         }
-        private Dictionary<string, float>[] initCentroids(List<int>[] linesClust, Dictionary<string, int>[] arrDict, int K)
+        private void firstInitJaccard(List<int>[] linesClust, int K)
+        {
+            double min;
+            int minRow, rightCluster;
+            int row;
+            for (int i = 0; i < linesNumber; i++)
+            {
+                minRow = linesClust[0].First();
+                min = Jdistance[i][minRow];
+                rightCluster = 0;
+                for (int j = 1; j < K; j++)
+                {
+                    row = linesClust[j].First();
+                    if (Jdistance[i][row] < min)
+                        rightCluster = j;
+                }
+                bool flag = true;
+                for (int n = 0; n < K; n++)
+                    if (i == linesClust[n].First())
+                    {
+                        flag = false;
+                        break;
+                    }
+                if (flag)
+                    linesClust[rightCluster].Add(i);
+            }
+
+            string print = "\n\n>>>>>>>>>>Initial placement<<<<<<<<<<";
+            int counter = 0;
+            for (int i = 0; i < K; i++)
+            {
+                counter += linesClust[i].Count;
+                print += string.Format("\nCluster {0} have {1} values.", i, linesClust[i].Count);
+            }
+            print += string.Format("\n\nCount of lines: {0}", counter);
+            UiInvoke(() => txtEditor.Text += print);
+        }
+        private Dictionary<string, float>[] initCentroids(List<int>[] linesClust, int K)
         {
             float sum = 0;
             float avg = 0;
@@ -543,12 +687,12 @@ namespace FinalProject
             for (int i = 0; i < K; i++)
             {
                 centroidClust[i] = new Dictionary<string, float>();
-                foreach (string key in arrDict[0].Keys)
+                foreach (string key in arrayDictionaries[0].Keys)
                 {
                     sum = 0;
                     foreach (int item in linesClust[i])
                     {
-                        sum += arrDict[item][key];
+                        sum += arrayDictionaries[item][key];
                     }
                     avg = sum / linesClust[i].Count;
                     centroidClust[i].Add(key, avg);
@@ -563,22 +707,21 @@ namespace FinalProject
                     print += string.Format(" {0}->{1} ", element.Key, element.Value);
                 }
             }
-            txtEditor.Text += print;
+            UiInvoke(() => txtEditor.Text += print);
             return centroidClust;
         }
-
-        private Dictionary<string, float>[] updateCentroids(Dictionary<string, float>[] centroidClust, List<int>[] linesClust, Dictionary<string, int>[] arrDict, int K)
+        private Dictionary<string, float>[] updateCentroids(Dictionary<string, float>[] centroidClust, List<int>[] linesClust, int K)
         {
             float sum = 0;
             float avg = 0;
             for (int i = 0; i < K; i++)
             {
-                foreach (string key in arrDict[0].Keys)
+                foreach (string key in arrayDictionaries[0].Keys)
                 {
                     sum = 0;
                     foreach (int item in linesClust[i])
                     {
-                        sum += arrDict[item][key];
+                        sum += arrayDictionaries[item][key];
                     }
                     if (linesClust[i].Count == 0)
                         avg = 0;
@@ -606,27 +749,75 @@ namespace FinalProject
                     print += string.Format(" {0}->{1} ", element.Key, element.Value);
                 }
             }
-            txtEditor.Text += print;
+            UiInvoke(() => txtEditor.Text += print);
             return centroidClust;
         }
-        private bool UpdateClusteringCosine(Dictionary<string, float>[] centroids, Dictionary<string, int>[] rowDict, List<int>[] lineClusters, int K, int iteration)
+        private bool UpdateClusteringCosine(Dictionary<string, float>[] centroids, List<int>[] lineClusters, int K, int iteration)
         {
             float minimum, cosineValue;
             int rightCluster;
             Dictionary<int, int> removeValues = new Dictionary<int, int>();
             Dictionary<int, int> addValues = new Dictionary<int, int>();
             bool hasChange = false, changeCluster = false;
-            string print = string.Format("\n\nIteration number {0}", iteration);
+            string print = string.Format("\n\n>>>>>>>>>>Iteration number {0}<<<<<<<<<<", iteration);
             for (int i = 0; i < K; i++)
             {
                 foreach (int item in lineClusters[i])
                 {
-                    minimum = calcCosineDictionary(rowDict[item], centroids[i]);
+                    minimum = calcCosineDictionary(arrayDictionaries[item], centroids[i]);
                     rightCluster = i;
-                    for (int j = 0; j < K && j != i; j++)
+                    for (int j = 0; j < K ; j++)
                     {
-                        cosineValue = calcCosineDictionary(rowDict[item], centroids[j]);
+                        cosineValue = calcCosineDictionary(arrayDictionaries[item], centroids[j]);
                         if (cosineValue < minimum)
+                        {
+                            minimum = cosineValue;
+                            hasChange = true;
+                            changeCluster = true;
+                            rightCluster = j;
+                        }
+                    }
+                    if (changeCluster)
+                    {
+                        removeValues.Add(item, i);
+                        addValues.Add(item, rightCluster);
+                    }
+                    changeCluster = false;
+                }
+            }
+            foreach (KeyValuePair<int, int> element in addValues)
+            {
+                lineClusters[element.Value].Add(element.Key);
+                lineClusters[removeValues[element.Key]].Remove(element.Key);
+//                print += string.Format("\nRow number {0} passed from cluster {1} to cluster {2}.", element.Key, removeValues[element.Key], element.Value);
+            }
+            for (int i = 0; i < K; i++)
+            {
+                if (lineClusters[i].Count == 0)
+                    return false;
+                print += string.Format("\nCluster {0} have {1} values.",i,lineClusters[i].Count);
+            }
+            UiInvoke(() => txtEditor.Text += print);
+            return hasChange;
+        }
+        private bool UpdateClusteringJaccard(Dictionary<string, float>[] centroids, List<int>[] lineClusters, int K, int iteration)
+        {
+            float minimum, jaccardeValue;
+            int rightCluster;
+            Dictionary<int, int> removeValues = new Dictionary<int, int>();
+            Dictionary<int, int> addValues = new Dictionary<int, int>();
+            bool hasChange = false, changeCluster = false;
+            string print = string.Format("\n\n>>>>>>>>>>Iteration number {0}<<<<<<<<<<", iteration);
+            for (int i = 0; i < K; i++)
+            {
+                foreach (int item in lineClusters[i])
+                {
+                    minimum = calcJaccardDictionary(arrayDictionaries[item], centroids[i]);
+                    rightCluster = i;
+                    for (int j = 0; j < K; j++)
+                    {
+                        jaccardeValue = calcJaccardDictionary(arrayDictionaries[item], centroids[j]);
+                        if (jaccardeValue < minimum)
                         {
                             hasChange = true;
                             changeCluster = true;
@@ -645,17 +836,38 @@ namespace FinalProject
             {
                 lineClusters[element.Value].Add(element.Key);
                 lineClusters[removeValues[element.Key]].Remove(element.Key);
-                //print += string.Format("\nRow number {0} passed from cluster {1} to cluster {2}.", element.Key, removeValues[element.Key], element.Value);
+                print += string.Format("\nRow number {0} passed from cluster {1} to cluster {2}.", element.Key, removeValues[element.Key], element.Value);
             }
             for (int i = 0; i < K; i++)
             {
                 if (lineClusters[i].Count == 0)
                     return false;
             }
-            txtEditor.Text += print;
+            UiInvoke(() => txtEditor.Text += print);
             return hasChange;
         }
+        private float calcJaccardDictionary(Dictionary<string, int> row, Dictionary<string, float> centroid)
+        {
+            float intersect = 0, union = 0;
+            float Jdistance = 0;
+            foreach (KeyValuePair<string, int> element in row) //pass over each value of the row dictionary
+            {
+                if (row[element.Key] > 0 && centroid[element.Key] > 0)
+                    intersect++;
+                if (row[element.Key] > 0 || centroid[element.Key] > 0)
+                    union++;
+            }
 
+            try
+            {
+                return Jdistance = 1 - intersect / union;
+            }
+            catch (DivideByZeroException)
+            {
+                MessageBox.Show("Error: division by zero", "Divide By Zero", MessageBoxButton.OK, MessageBoxImage.Error);
+                return 0;
+            }
+        }
         private float calcCosineDictionary(Dictionary<string, int> row, Dictionary<string, float> centroid)
         {
             double numerator = 0, denominator = 0;

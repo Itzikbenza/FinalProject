@@ -17,14 +17,14 @@
         </Button>
         <Label Content="DataSet Ranking Application" HorizontalAlignment="Left" Margin="112,0,0,0" VerticalAlignment="Top" Width="684" Height="78" FontFamily="Papyrus" FontSize="48" FontWeight="Bold"/>
         <TextBox x:Name="txtEditor" HorizontalAlignment="Left" Height="375" Margin="52,159,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="800" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible"/>
-        <Button x:Name="jccard_button" Content="Jaccard distance" HorizontalAlignment="Left" Margin="429,94,0,0" VerticalAlignment="Top" Width="115" Height="40" FontFamily="AR JULIAN" FontSize="14" Click="jccard_button_Click" IsEnabled="False"/>
-        <Button x:Name="cosine_button" Content="Cosine Distance" HorizontalAlignment="Left" Margin="574,94,0,0" VerticalAlignment="Top" Width="115" Height="40" FontFamily="AR JULIAN" FontSize="14" Click="cosine_button_Click" IsEnabled="False"/>
+        <Button x:Name="jccard_button" Content="Jaccard Distance" HorizontalAlignment="Left" Margin="429,94,0,0" VerticalAlignment="Top" Width="115" Height="40" FontFamily="AR JULIAN" FontSize="14" Click="jaccard_button_Click"/>
+        <Button x:Name="cosine_button" Content="Cosine Distance" HorizontalAlignment="Left" Margin="574,94,0,0" VerticalAlignment="Top" Width="115" Height="40" FontFamily="AR JULIAN" FontSize="14" Click="cosine_button_Click"/>
         <Label x:Name="distance_label" Content="Distance By:" HorizontalAlignment="Left" Margin="279,94,0,0" VerticalAlignment="Top" FontFamily="AR JULIAN" FontSize="20" Height="34" Width="116"/>
-        <Button x:Name="PageRank_button" Content="PageRank" HorizontalAlignment="Left" Margin="52,567,0,0" VerticalAlignment="Top" Width="115" Height="40" FontFamily="AR JULIAN" FontSize="14" Click="PageRank_button_Click"/>
-        <Button x:Name="kmeans_button" Content="K-Means" HorizontalAlignment="Left" Margin="279,567,0,0" VerticalAlignment="Top" Width="115" Height="40" FontFamily="AR JULIAN" FontSize="14" Click="kmeans_button_Click"/>
+        <Button x:Name="PageRank_button" Content="PageRank" HorizontalAlignment="Left" Margin="52,567,0,0" VerticalAlignment="Top" Width="115" Height="40" FontFamily="AR JULIAN" FontSize="14" Click="PageRank_button_Click" IsEnabled="False"/>
+        <Button x:Name="kmeans_button" Content="K-Means" HorizontalAlignment="Left" Margin="279,567,0,0" VerticalAlignment="Top" Width="115" Height="40" FontFamily="AR JULIAN" FontSize="14" Click="kmeans_button_Click" IsEnabled="False"/>
         <Label x:Name="timer_lebal" Content="Timer:" HorizontalAlignment="Left" Margin="597,571,0,0" VerticalAlignment="Top" Width="79" RenderTransformOrigin="0.54,1.276" FontSize="24" FontFamily="Imprint MT Shadow" Height="39"/>
         <TextBlock x:Name="ClockTextBlock" HorizontalAlignment="Left" Margin="681,576,0,0" TextWrapping="Wrap" Text="00:00:00" VerticalAlignment="Top" Height="39" Width="160" FontFamily="Imprint MT Shadow" FontSize="24"/>
-        
+
 
 
     </Grid>
