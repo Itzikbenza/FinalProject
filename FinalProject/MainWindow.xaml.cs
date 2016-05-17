@@ -544,7 +544,7 @@ namespace FinalProject
         {      
             firstInitCosine(linesClusters, kValue);
             clustCentroid = initCentroids(linesClusters, kValue);
-            while (hasChange && iteration<50)
+            while (hasChange && iteration<100)
             {
                 hasChange = UpdateClusteringCosine(clustCentroid, linesClusters, kValue, iteration);
                 clustCentroid = updateCentroids(clustCentroid, linesClusters, kValue);
@@ -740,16 +740,16 @@ namespace FinalProject
                     centroidClust[i][key] = avg;
                 }
             }
-            string print = "\n\n>>>>>>>>>>The centroids<<<<<<<<<<";
-            for (int i = 0; i < K; i++)
-            {
-                print += string.Format("\n\nCentroid of cluster {0}:\n", i);
-                foreach (KeyValuePair<string, float> element in centroidClust[i])
-                {
-                    print += string.Format(" {0}->{1} ", element.Key, element.Value);
-                }
-            }
-            UiInvoke(() => txtEditor.Text += print);
+            //string print = "\n\n>>>>>>>>>>The centroids<<<<<<<<<<";
+            //for (int i = 0; i < K; i++)
+            //{
+            //    print += string.Format("\n\nCentroid of cluster {0}:\n", i);
+            //    foreach (KeyValuePair<string, float> element in centroidClust[i])
+            //    {
+            //        print += string.Format(" {0}->{1} ", element.Key, element.Value);
+            //    }
+            //}
+            //UiInvoke(() => txtEditor.Text += print);
             return centroidClust;
         }
         private bool UpdateClusteringCosine(Dictionary<string, float>[] centroids, List<int>[] lineClusters, int K, int iteration)
