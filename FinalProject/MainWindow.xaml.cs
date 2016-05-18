@@ -541,10 +541,10 @@ namespace FinalProject
             UiInvoke(() => MessageBox.Show(String.Format("Finish - K-Means of Jaccard on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
         }
         private void kmeans_cosine(List<int>[] linesClusters, Dictionary<string, float>[] clustCentroid, int kValue, int iteration, bool hasChange)
-        {      
+        {
             firstInitCosine(linesClusters, kValue);
             clustCentroid = initCentroids(linesClusters, kValue);
-            while (hasChange && iteration<100)
+            while (hasChange && iteration < 100)
             {
                 hasChange = UpdateClusteringCosine(clustCentroid, linesClusters, kValue, iteration);
                 clustCentroid = updateCentroids(clustCentroid, linesClusters, kValue);
@@ -556,42 +556,9 @@ namespace FinalProject
             stopWatch.Stop();
             UiInvoke(() => MessageBox.Show(String.Format("Finish - K-Means of Cosine on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
         }
-        //private Dictionary<string, int>[] KmeansReadData(string FileBuff)
-        //{
-        //    splitBySpacesAndLines(FileBuff);
-
-        //    HashSet<string> hash = new HashSet<string>();
-        //    Dictionary<string, int> init_dict = new Dictionary<string, int>();//define defulat dictioanry for all the dataset
-
-        //    for (int i = 0; i < linesNumber; i++)
-        //        for (int j = 0; j < FileMatrix[i].Length; j++)
-        //            hash.Add(FileMatrix[i][j]);
-
-        //    string text_show = null;
-        //    text_show = "The DataSet include the values : ";
-        //    foreach (string i in hash)
-        //        text_show += string.Format("{0} ", i);
-
-        //    text_show += string.Format("\nThe DataSet include {0} values\n", hash.Count.ToString());
-        //    UiInvoke(() => txtEditor.Text = text_show);
-
-        //    foreach (string key in hash)
-        //        init_dict[key] = 0;
-
-        //    arrayDictionaries = new Dictionary<string, int>[linesNumber];
-        //    for (int i = 0; i < linesNumber; i++)
-        //        arrayDictionaries[i] = new Dictionary<string, int>(init_dict);// init array of dictionaris by the file 
-
-        //    for (int i = 0; i < linesNumber; i++)
-        //        for (int j = 0; j < FileMatrix[i].Length; j++)
-        //            if (arrayDictionaries[i].ContainsKey(FileMatrix[i][j]))
-        //                arrayDictionaries[i][FileMatrix[i][j]] += 1;// cehck if the key is exsit in the line and up the value of the key
-        //    return arrayDictionaries;
-        //}
-
         private List<int>[] initRandom(int K)
         {
-            
+
             string print = "\n>>>>>>>>>>Init iteration<<<<<<<<<<\n";
             Random random = new Random();
             List<int>[] linesClast = new List<int>[K];
@@ -714,6 +681,14 @@ namespace FinalProject
         {
             float sum = 0;
             float avg = 0;
+            Dictionary<string, float>[] oldCentroid = new Dictionary<string, float>[centroidClust.Length];
+            for (int i = 0; i < centroidClust.Length; i++)
+            {
+                oldCentroid[i] = new Dictionary<string, float>();
+                foreach (KeyValuePair<string, float> item in centroidClust[i])
+                    oldCentroid[i].Add(item.Key, item.Value);
+            }
+
             for (int i = 0; i < K; i++)
             {
                 foreach (string key in arrayDictionaries[0].Keys)
@@ -740,6 +715,15 @@ namespace FinalProject
                     centroidClust[i][key] = avg;
                 }
             }
+            float distance;
+            string print = "\n";
+            for (int i = 0; i < K; i++)
+            {
+                distance = calc_distance_centroids(oldCentroid[i], centroidClust[i]);
+                print += string.Format("\nThe distance of centroid {0}: current centriod VS old centroid is {1}",i, distance);
+            }
+
+            UiInvoke(() => txtEditor.Text += print);
             //string print = "\n\n>>>>>>>>>>The centroids<<<<<<<<<<";
             //for (int i = 0; i < K; i++)
             //{
@@ -766,7 +750,7 @@ namespace FinalProject
                 {
                     minimum = calcCosineDictionary(arrayDictionaries[item], centroids[i]);
                     rightCluster = i;
-                    for (int j = 0; j < K ; j++)
+                    for (int j = 0; j < K; j++)
                     {
                         cosineValue = calcCosineDictionary(arrayDictionaries[item], centroids[j]);
                         if (cosineValue < minimum)
@@ -789,13 +773,31 @@ namespace FinalProject
             {
                 lineClusters[element.Value].Add(element.Key);
                 lineClusters[removeValues[element.Key]].Remove(element.Key);
-//                print += string.Format("\nRow number {0} passed from cluster {1} to cluster {2}.", element.Key, removeValues[element.Key], element.Value);
+                // print += string.Format("\nRow number {0} passed from cluster {1} to cluster {2}.", element.Key, removeValues[element.Key], element.Value);
             }
+            int ClosestRow = 0;
+            float minDistance = 0, distance;
             for (int i = 0; i < K; i++)
             {
+                minDistance = calcCosineDictionary(arrayDictionaries[lineClusters[i][0]], centroids[i]);
+                ClosestRow = lineClusters[i][0];
+                //#########################################################################
+                foreach (int item in lineClusters[i])
+                {
+                    distance = calcCosineDictionary(arrayDictionaries[item], centroids[i]);
+                    if (distance < minDistance)
+                    {
+                        minDistance = distance;
+                        ClosestRow = item;
+                    }
+                }
+
                 if (lineClusters[i].Count == 0)
                     return false;
-                print += string.Format("\nCluster {0} have {1} values.",i,lineClusters[i].Count);
+                print += ("\n###########################################");
+                print += string.Format("\nCluster {0} have {1} values.", i, lineClusters[i].Count);
+                print += string.Format("\nThe closest row to centriod is row {0} and the value is {1}", ClosestRow, minDistance);
+                //print += string.Format("\n{0}", FileMatrix[ClosestRow]);
             }
             UiInvoke(() => txtEditor.Text += print);
             return hasChange;
@@ -868,6 +870,29 @@ namespace FinalProject
                 return 0;
             }
         }
+        private float calc_distance_centroids(Dictionary<string, float> oldCentroid, Dictionary<string, float> newCentroid)
+        {
+            float distance = 0;
+            double numerator = 0, denominator = 0;
+            double Ai = 0, Bi = 0;
+            foreach (KeyValuePair<string, float> element in oldCentroid)
+            {
+                numerator += oldCentroid[element.Key] * newCentroid[element.Key];
+                Ai += Math.Pow(oldCentroid[element.Key], 2);
+                Bi += Math.Pow(newCentroid[element.Key], 2);
+            }
+            denominator = Math.Sqrt(Ai) * Math.Sqrt(Bi);
+            try
+            {
+                distance = 1 - (float)(numerator / denominator);
+            }
+            catch (DivideByZeroException)
+            {
+                MessageBox.Show("Error: division by zero", "Divide By Zero", MessageBoxButton.OK, MessageBoxImage.Error);
+                return 0;
+            }
+            return distance;
+        }
         private float calcCosineDictionary(Dictionary<string, int> row, Dictionary<string, float> centroid)
         {
             double numerator = 0, denominator = 0;
@@ -881,7 +906,7 @@ namespace FinalProject
             denominator = Math.Sqrt(Ai) * Math.Sqrt(Bi);
             try
             {
-                return (float)(numerator / denominator);
+                return 1 - (float)(numerator / denominator);
             }
             catch (DivideByZeroException)
             {
