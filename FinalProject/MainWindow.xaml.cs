@@ -750,15 +750,15 @@ namespace FinalProject
                 {
                     minimum = calcCosineDictionary(arrayDictionaries[item], centroids[i]);
                     rightCluster = i;
-                    for (int j = 0; j < K; j++)
+                    for (int j = 0; j < K ; j++)
                     {
                         cosineValue = calcCosineDictionary(arrayDictionaries[item], centroids[j]);
                         if (cosineValue < minimum)
                         {
                             minimum = cosineValue;
+                            rightCluster = j;
                             hasChange = true;
                             changeCluster = true;
-                            rightCluster = j;
                         }
                     }
                     if (changeCluster)
