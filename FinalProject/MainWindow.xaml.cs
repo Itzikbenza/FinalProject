@@ -319,101 +319,15 @@ namespace FinalProject
             stopWatch.Start();
             timer.Start();
         }
-        private Dictionary<string, int> CreatCountItems(Dictionary<string, int> CountItems)
-        {
-            foreach (string key in hashSet)
-            {
-                CountItems.Add(key, 0);
-            }
-            for (int i = 0; i < linesNumber; i++)
-            {
-                foreach (string key in arrayDictionaries[i].Keys)
-                {
-                    if (arrayDictionaries[i][key] >= 1)
-                        CountItems[key]++;
-                }
-            }
-            return CountItems;
-        }
-
-
-        private Dictionary<string, float> initDict(Dictionary<string, float> dict)
-        {
-            foreach (string key in hashSet)
-            {
-                dict.Add(key, 0);
-            }
-            return dict;
-        }
-        public void calc_JDistancePagerank(Dictionary<string, float> frequnceDict)
-        {
-            Dictionary<string, float>[] freqDictionaries;
-            freqDictionaries = new Dictionary<string, float>[linesNumber];
-            //Dictionary<string, float> init_dict = new Dictionary<string, float>();
-            for (int i = 0; i < linesNumber; i++)
-            {
-                freqDictionaries[i] = new Dictionary<string, float>();
-                foreach (KeyValuePair<string, float> item in frequnceDict)
-                {
-                    if (arrayDictionaries[i][item.Key] > 0)
-                    {
-                        freqDictionaries[i][item.Key] = frequnceDict[item.Key];
-                    }
-                    else
-                        freqDictionaries[i][item.Key] = 0;
-                }
-            }
-            float intersect, union;
-            Jdistance = new float[linesNumber][];
-            for (int i = 0; i < linesNumber; i++)
-            {
-                Jdistance[i] = new float[linesNumber];
-                for (int j = i; j < linesNumber; j++)
-                {
-                    intersect = 0;
-                    union = 0;
-                    foreach (KeyValuePair<string, float> item in freqDictionaries[j])
-                    {
-                        if (freqDictionaries[i][item.Key] > 0 && freqDictionaries[j][item.Key] > 0)
-                            intersect++;
-                        if (freqDictionaries[i][item.Key] > 0 || freqDictionaries[j][item.Key] > 0)
-                            union++;
-                    }
-                    Jdistance[i][j] = 1 - intersect / union;
-                }
-            }
-            for (int i = 0; i < linesNumber; i++)
-                for (int j = 0; i > j; j++)
-                    if (Jdistance[i][j] == 0)
-                        Jdistance[i][j] = Jdistance[j][i];
-            // After finish jaccard calculates
-            timer.Stop();
-            stopWatch.Stop();
-            UiInvoke(() => MessageBox.Show(String.Format("Finish - Jaccard distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
-            UiInvoke(() => txtEditor.Text = String.Join(" | ", Jdistance[0].Select(p => p.ToString()).ToArray()));
-            UiInvoke(() => kmeans_button.IsEnabled = true);
-            UiInvoke(() => PageRank_button.IsEnabled = true);
-        }
         private void calc_pageRank_jdistance()
         {
             stopWatch.Reset();
             stopWatch.Start();
             timer.Start();
-            int maxValue = 0;
+            double d = 0.85;
             double divEpsilon = 1.0, Epsilon = 1.0, newEpsilon = 0.0;
-            Dictionary<string, int> CountItems = new Dictionary<string, int>();
-            Dictionary<string, float> frequnceDict = new Dictionary<string, float>();
             double[] PageRank = new double[linesNumber];
             double[] newPageRank = new double[linesNumber];
-            CountItems = CreatCountItems(CountItems);
-            frequnceDict = initDict(frequnceDict);
-            maxValue = CountItems.Values.Max();
-            foreach (KeyValuePair<string, int> item in CountItems)
-            {
-                frequnceDict[item.Key] = (float)maxValue / (float)CountItems[item.Key];
-            }
-            calc_JDistancePagerank(frequnceDict);
-
             for (int i = 0; i < linesNumber; i++)
             {
                 PageRank[i] = (float)1 / linesNumber;
@@ -548,6 +462,8 @@ namespace FinalProject
                 pagerank_cosine_thread.Start();
             }
         }
+
+        //#########################################################################  K-MEANS  #########################################################################
         private void kmeans_button_Click(object sender, RoutedEventArgs e)
         {
             string question = "How many clusters do you want to create?";
@@ -556,14 +472,10 @@ namespace FinalProject
             kInput.ShowDialog();
             if (kInput.DialogResult.HasValue && kInput.DialogResult.Value)
             {
-                ////Start TIMER
-                //stopWatch.Reset();
-                //stopWatch.Start();
-                //timer.Start();
                 kValue = Convert.ToInt32(kInput.Answer); // K input
                 List<int>[] linesClusters; //array of list ins size of K, each list have the lines of the cluster
                 bool hasChange = true; //bool flag, if was a cluster change
-                Dictionary<string, float>[] clustCentroid = new Dictionary<string, float>[kValue];   //##################
+                Dictionary<string, float>[] clustCentroid = new Dictionary<string, float>[kValue];
 
                 //Start TIMER
                 stopWatch.Reset();
@@ -572,41 +484,17 @@ namespace FinalProject
                 // >>> INIT ITERATION<<<
                 linesClusters = initRandom(kValue);
                 int iteration = 1;
-                //if (flag==1) //if Jaccard Distance algorithm was run
-                //{
-                //    //Thread jaccardKmeansThread = new Thread(() => kmeans_jaccard(linesClusters, clustCentroid, kValue, iteration, hasChange));
-                //    //jaccardKmeansThread.Start();
-                //    firstInitJaccard(linesClusters, kValue);
-                //    clustCentroid = initCentroids(linesClusters, kValue);
-                //    while (hasChange)
-                //    {
-                //        hasChange = UpdateClusteringJaccard(clustCentroid, linesClusters, kValue, iteration);
-                //        clustCentroid = updateCentroids(clustCentroid, linesClusters, kValue);
-                //        iteration++;
-                //    }
-                //    txtEditor.Text += string.Format("\n\n>>>>>>>>>>FINISH AFTER {0} ITERATIONS<<<<<<<<<<", iteration);
-                //    //Stop TIMER
-                //    timer.Stop();
-                //    stopWatch.Stop();
-                //    MessageBox.Show(String.Format("Finish - K-Means of Jaccard on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information);
-                //}
+                if (flag == 1) //if Jaccard Distance algorithm was run
+                {
+                    txtEditor.Text = "######################################## K-MEANS BY JACCARS DISTANCE ########################################";
+                    Thread jaccardKmeansThread = new Thread(() => kmeans_jaccard(linesClusters, clustCentroid, kValue, iteration, hasChange));
+                    jaccardKmeansThread.Start();
+                }
                 if (flag == 2) //if Cosine Distance algorithm was run
                 {
+                    txtEditor.Text = "######################################## K-MEANS BY COSSINE DISTANCE ########################################";
                     Thread cosineKmeansThread = new Thread(() => kmeans_cosine(linesClusters, clustCentroid, kValue, iteration, hasChange));
                     cosineKmeansThread.Start();
-                    //firstInitCosine(linesClusters, kValue);
-                    //clustCentroid = initCentroids(linesClusters, kValue);
-                    //while (hasChange && iteration<10)
-                    //{
-                    //    hasChange = UpdateClusteringCosine(clustCentroid, linesClusters, kValue, iteration);
-                    //    clustCentroid = updateCentroids(clustCentroid, linesClusters, kValue);
-                    //    iteration++;
-                    //}
-                    //txtEditor.Text += string.Format("\n\n>>>>>>>>>>FINISH AFTER {0} ITERATIONS<<<<<<<<<<", iteration);
-                    //////Stop TIMER
-                    ////timer.Stop();
-                    ////stopWatch.Stop();
-                    //MessageBox.Show(String.Format("Finish - K-Means of Cosine on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
         }
@@ -614,10 +502,11 @@ namespace FinalProject
         {
             firstInitJaccard(linesClusters, kValue);
             clustCentroid = initCentroids(linesClusters, kValue);
-            while (hasChange)
+            while (hasChange && iteration < 100)
             {
-                hasChange = UpdateClusteringJaccard(clustCentroid, linesClusters, kValue, iteration);
+                hasChange = UpdateClusteringJaccard(clustCentroid, linesClusters, kValue);
                 clustCentroid = updateCentroids(clustCentroid, linesClusters, kValue);
+                prints_rowClosest_centroidDifference(clustCentroid, linesClusters, kValue, iteration);
                 iteration++;
             }
             UiInvoke(() => txtEditor.Text += string.Format("\n\n>>>>>>>>>>FINISH AFTER {0} ITERATIONS<<<<<<<<<<", iteration));
@@ -632,8 +521,9 @@ namespace FinalProject
             clustCentroid = initCentroids(linesClusters, kValue);
             while (hasChange && iteration < 100)
             {
-                hasChange = UpdateClusteringCosine(clustCentroid, linesClusters, kValue, iteration);
+                hasChange = UpdateClusteringCosine(clustCentroid, linesClusters, kValue);
                 clustCentroid = updateCentroids(clustCentroid, linesClusters, kValue);
+                prints_rowClosest_centroidDifference(clustCentroid, linesClusters, kValue, iteration);
                 iteration++;
             }
             UiInvoke(() => txtEditor.Text += string.Format("\n\n>>>>>>>>>>FINISH AFTER {0} ITERATIONS<<<<<<<<<<", iteration));
@@ -767,13 +657,13 @@ namespace FinalProject
         {
             float sum = 0;
             float avg = 0;
-            Dictionary<string, float>[] oldCentroid = new Dictionary<string, float>[centroidClust.Length];
-            for (int i = 0; i < centroidClust.Length; i++)
-            {
-                oldCentroid[i] = new Dictionary<string, float>();
-                foreach (KeyValuePair<string, float> item in centroidClust[i])
-                    oldCentroid[i].Add(item.Key, item.Value);
-            }
+            //Dictionary<string, float>[] oldCentroid = new Dictionary<string, float>[centroidClust.Length];
+            //for (int i = 0; i < centroidClust.Length; i++)
+            //{
+            //    oldCentroid[i] = new Dictionary<string, float>();
+            //    foreach (KeyValuePair<string, float> item in centroidClust[i])
+            //        oldCentroid[i].Add(item.Key, item.Value);
+            //}
 
             for (int i = 0; i < K; i++)
             {
@@ -801,15 +691,15 @@ namespace FinalProject
                     centroidClust[i][key] = avg;
                 }
             }
-            float distance;
-            string print = "\n";
-            for (int i = 0; i < K; i++)
-            {
-                distance = calc_distance_centroids(oldCentroid[i], centroidClust[i]);
-                print += string.Format("\nThe distance of centroid {0}: current centriod VS old centroid is {1}",i, distance);
-            }
+            //float distance;
+            //string print = "\n";
+            //for (int i = 0; i < K; i++)
+            //{
+            //    distance = calc_distance_centroids(oldCentroid[i], centroidClust[i]);
+            //    print += string.Format("\nThe distance of centroid {0}: current centriod VS old centroid is {1}", i, distance);
+            //}
 
-            UiInvoke(() => txtEditor.Text += print);
+            //UiInvoke(() => txtEditor.Text += print);
             //string print = "\n\n>>>>>>>>>>The centroids<<<<<<<<<<";
             //for (int i = 0; i < K; i++)
             //{
@@ -822,21 +712,21 @@ namespace FinalProject
             //UiInvoke(() => txtEditor.Text += print);
             return centroidClust;
         }
-        private bool UpdateClusteringCosine(Dictionary<string, float>[] centroids, List<int>[] lineClusters, int K, int iteration)
+        private bool UpdateClusteringCosine(Dictionary<string, float>[] centroids, List<int>[] lineClusters, int K)
         {
             float minimum, cosineValue;
             int rightCluster;
             Dictionary<int, int> removeValues = new Dictionary<int, int>();
             Dictionary<int, int> addValues = new Dictionary<int, int>();
             bool hasChange = false, changeCluster = false;
-            string print = string.Format("\n\n>>>>>>>>>>Iteration number {0}<<<<<<<<<<", iteration);
+
             for (int i = 0; i < K; i++)
             {
                 foreach (int item in lineClusters[i])
                 {
                     minimum = calcCosineDictionary(arrayDictionaries[item], centroids[i]);
                     rightCluster = i;
-                    for (int j = 0; j < K ; j++)
+                    for (int j = 0; j < K; j++)
                     {
                         cosineValue = calcCosineDictionary(arrayDictionaries[item], centroids[j]);
                         if (cosineValue < minimum)
@@ -861,41 +751,20 @@ namespace FinalProject
                 lineClusters[removeValues[element.Key]].Remove(element.Key);
                 // print += string.Format("\nRow number {0} passed from cluster {1} to cluster {2}.", element.Key, removeValues[element.Key], element.Value);
             }
-            int ClosestRow = 0;
-            float minDistance = 0, distance;
             for (int i = 0; i < K; i++)
-            {
-                minDistance = calcCosineDictionary(arrayDictionaries[lineClusters[i][0]], centroids[i]);
-                ClosestRow = lineClusters[i][0];
-                //#########################################################################
-                foreach (int item in lineClusters[i])
-                {
-                    distance = calcCosineDictionary(arrayDictionaries[item], centroids[i]);
-                    if (distance < minDistance)
-                    {
-                        minDistance = distance;
-                        ClosestRow = item;
-                    }
-                }
-
                 if (lineClusters[i].Count == 0)
                     return false;
-                print += ("\n###########################################");
-                print += string.Format("\nCluster {0} have {1} values.", i, lineClusters[i].Count);
-                print += string.Format("\nThe closest row to centriod is row {0} and the value is {1}", ClosestRow, minDistance);
-                //print += string.Format("\n{0}", FileMatrix[ClosestRow]);
-            }
-            UiInvoke(() => txtEditor.Text += print);
+
             return hasChange;
         }
-        private bool UpdateClusteringJaccard(Dictionary<string, float>[] centroids, List<int>[] lineClusters, int K, int iteration)
+        private bool UpdateClusteringJaccard(Dictionary<string, float>[] centroids, List<int>[] lineClusters, int K)
         {
-            float minimum, jaccardeValue;
+            float minimum, jaccardValue;
             int rightCluster;
             Dictionary<int, int> removeValues = new Dictionary<int, int>();
             Dictionary<int, int> addValues = new Dictionary<int, int>();
             bool hasChange = false, changeCluster = false;
-            string print = string.Format("\n\n>>>>>>>>>>Iteration number {0}<<<<<<<<<<", iteration);
+
             for (int i = 0; i < K; i++)
             {
                 foreach (int item in lineClusters[i])
@@ -904,12 +773,13 @@ namespace FinalProject
                     rightCluster = i;
                     for (int j = 0; j < K; j++)
                     {
-                        jaccardeValue = calcJaccardDictionary(arrayDictionaries[item], centroids[j]);
-                        if (jaccardeValue < minimum)
+                        jaccardValue = calcJaccardDictionary(arrayDictionaries[item], centroids[j]);
+                        if (jaccardValue < minimum)
                         {
+                            minimum = jaccardValue;
+                            rightCluster = j;
                             hasChange = true;
                             changeCluster = true;
-                            rightCluster = j;
                         }
                     }
                     if (changeCluster)
@@ -924,31 +794,48 @@ namespace FinalProject
             {
                 lineClusters[element.Value].Add(element.Key);
                 lineClusters[removeValues[element.Key]].Remove(element.Key);
-                print += string.Format("\nRow number {0} passed from cluster {1} to cluster {2}.", element.Key, removeValues[element.Key], element.Value);
+                // print += string.Format("\nRow number {0} passed from cluster {1} to cluster {2}.", element.Key, removeValues[element.Key], element.Value);
             }
             for (int i = 0; i < K; i++)
-            {
                 if (lineClusters[i].Count == 0)
                     return false;
-            }
-            UiInvoke(() => txtEditor.Text += print);
+
             return hasChange;
         }
         private float calcJaccardDictionary(Dictionary<string, int> row, Dictionary<string, float> centroid)
         {
-            float intersect = 0, union = 0;
-            float Jdistance = 0;
+            double numerator = 0, denominator = 0;
+            float Jdist = 0;
             foreach (KeyValuePair<string, int> element in row) //pass over each value of the row dictionary
             {
-                if (row[element.Key] > 0 && centroid[element.Key] > 0)
-                    intersect++;
-                if (row[element.Key] > 0 || centroid[element.Key] > 0)
-                    union++;
+                numerator += row[element.Key] * centroid[element.Key];
+                denominator += Math.Pow(row[element.Key] + centroid[element.Key], 2);
             }
-
+            denominator = Math.Sqrt(denominator);
             try
             {
-                return Jdistance = 1 - intersect / union;
+                return Jdist = 1 - (float)(numerator / denominator);
+            }
+            catch (DivideByZeroException)
+            {
+                MessageBox.Show("Error: division by zero", "Divide By Zero", MessageBoxButton.OK, MessageBoxImage.Error);
+                return 0;
+            }
+        }
+        private float calcCosineDictionary(Dictionary<string, int> row, Dictionary<string, float> centroid)
+        {
+            double numerator = 0, denominator = 0;
+            double Ai = 0, Bi = 0;
+            foreach (KeyValuePair<string, int> element in row)
+            {
+                numerator += row[element.Key] * centroid[element.Key];
+                Ai += Math.Pow(row[element.Key], 2);
+                Bi += Math.Pow(centroid[element.Key], 2);
+            }
+            denominator = Math.Sqrt(Ai) * Math.Sqrt(Bi);
+            try
+            {
+                return 1 - (float)(numerator / denominator);
             }
             catch (DivideByZeroException)
             {
@@ -979,26 +866,34 @@ namespace FinalProject
             }
             return distance;
         }
-        private float calcCosineDictionary(Dictionary<string, int> row, Dictionary<string, float> centroid)
+        private void prints_rowClosest_centroidDifference(Dictionary<string, float>[] centroids, List<int>[] lineClusters, int K, int iteration)
         {
-            double numerator = 0, denominator = 0;
-            double Ai = 0, Bi = 0;
-            foreach (KeyValuePair<string, int> element in row)
+            string print = string.Format("\n\n>>>>>>>>>>Iteration number {0}<<<<<<<<<<", iteration);
+            int ClosestRow = 0;
+            float minDistance = 0, distance;
+            for (int i = 0; i < K; i++)
             {
-                numerator += row[element.Key] * centroid[element.Key];
-                Ai += Math.Pow(row[element.Key], 2);
-                Bi += Math.Pow(centroid[element.Key], 2);
+                minDistance = calcCosineDictionary(arrayDictionaries[lineClusters[i][0]], centroids[i]);
+                ClosestRow = lineClusters[i][0];
+                foreach (int item in lineClusters[i])
+                {
+                    distance = calcCosineDictionary(arrayDictionaries[item], centroids[i]);
+                    if (distance < minDistance)
+                    {
+                        minDistance = distance;
+                        ClosestRow = item;
+                    }
+                }
+
+                print += string.Format("\nCluster {0} have {1} values.", i, lineClusters[i].Count);
+                print += string.Format("\nThe closest row to centriod {2} is row {0} and the distance is {1}", ClosestRow, minDistance, i);
+                print += string.Format("\nRow {0}: ", ClosestRow);
+                for (int j = 0; j < FileMatrix[ClosestRow].Length; j++)
+                    print += string.Format("{0} ", FileMatrix[ClosestRow][j]);
+                print += ("----------------------------------------------------------------------------------------------------------------------------------");
             }
-            denominator = Math.Sqrt(Ai) * Math.Sqrt(Bi);
-            try
-            {
-                return 1 - (float)(numerator / denominator);
-            }
-            catch (DivideByZeroException)
-            {
-                MessageBox.Show("Error: division by zero", "Divide By Zero", MessageBoxButton.OK, MessageBoxImage.Error);
-                return 0;
-            }
+            UiInvoke(() => txtEditor.Text += print);
         }
+
     }
 }
