@@ -319,15 +319,101 @@ namespace FinalProject
             stopWatch.Start();
             timer.Start();
         }
+        private Dictionary<string, int> CreatCountItems(Dictionary<string, int> CountItems)
+        {
+            foreach (string key in hashSet)
+            {
+                CountItems.Add(key, 0);
+            }
+            for (int i = 0; i < linesNumber; i++)
+            {
+                foreach (string key in arrayDictionaries[i].Keys)
+                {
+                    if (arrayDictionaries[i][key] >= 1)
+                        CountItems[key]++;
+                }
+            }
+            return CountItems;
+        }
+
+
+        private Dictionary<string, float> initDict(Dictionary<string, float> dict)
+        {
+            foreach (string key in hashSet)
+            {
+                dict.Add(key, 0);
+            }
+            return dict;
+        }
+        public void calc_JDistancePagerank(Dictionary<string, float> frequnceDict)
+        {
+            Dictionary<string, float>[] freqDictionaries;
+            freqDictionaries = new Dictionary<string, float>[linesNumber];
+            //Dictionary<string, float> init_dict = new Dictionary<string, float>();
+            for (int i = 0; i < linesNumber; i++)
+            {
+                freqDictionaries[i] = new Dictionary<string, float>();
+                foreach (KeyValuePair<string, float> item in frequnceDict)
+                {
+                    if (arrayDictionaries[i][item.Key] > 0)
+                    {
+                        freqDictionaries[i][item.Key] = frequnceDict[item.Key];
+                    }
+                    else
+                        freqDictionaries[i][item.Key] = 0;
+                }
+            }
+            float intersect, union;
+            Jdistance = new float[linesNumber][];
+            for (int i = 0; i < linesNumber; i++)
+            {
+                Jdistance[i] = new float[linesNumber];
+                for (int j = i; j < linesNumber; j++)
+                {
+                    intersect = 0;
+                    union = 0;
+                    foreach (KeyValuePair<string, float> item in freqDictionaries[j])
+                    {
+                        if (freqDictionaries[i][item.Key] > 0 && freqDictionaries[j][item.Key] > 0)
+                            intersect++;
+                        if (freqDictionaries[i][item.Key] > 0 || freqDictionaries[j][item.Key] > 0)
+                            union++;
+                    }
+                    Jdistance[i][j] = 1 - intersect / union;
+                }
+            }
+            for (int i = 0; i < linesNumber; i++)
+                for (int j = 0; i > j; j++)
+                    if (Jdistance[i][j] == 0)
+                        Jdistance[i][j] = Jdistance[j][i];
+            // After finish jaccard calculates
+            timer.Stop();
+            stopWatch.Stop();
+            UiInvoke(() => MessageBox.Show(String.Format("Finish - Jaccard distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
+            UiInvoke(() => txtEditor.Text = String.Join(" | ", Jdistance[0].Select(p => p.ToString()).ToArray()));
+            UiInvoke(() => kmeans_button.IsEnabled = true);
+            UiInvoke(() => PageRank_button.IsEnabled = true);
+        }
         private void calc_pageRank_jdistance()
         {
             stopWatch.Reset();
             stopWatch.Start();
             timer.Start();
-            double d = 0.85;
+            int maxValue = 0;
             double divEpsilon = 1.0, Epsilon = 1.0, newEpsilon = 0.0;
+            Dictionary<string, int> CountItems = new Dictionary<string, int>();
+            Dictionary<string, float> frequnceDict = new Dictionary<string, float>();
             double[] PageRank = new double[linesNumber];
             double[] newPageRank = new double[linesNumber];
+            CountItems = CreatCountItems(CountItems);
+            frequnceDict = initDict(frequnceDict);
+            maxValue = CountItems.Values.Max();
+            foreach (KeyValuePair<string, int> item in CountItems)
+            {
+                frequnceDict[item.Key] = (float)maxValue / (float)CountItems[item.Key];
+            }
+            calc_JDistancePagerank(frequnceDict);
+
             for (int i = 0; i < linesNumber; i++)
             {
                 PageRank[i] = (float)1 / linesNumber;
