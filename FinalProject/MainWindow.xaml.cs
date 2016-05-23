@@ -321,19 +321,161 @@ namespace FinalProject
         //#########################################################################  PAGERANK  #########################################################################
         private void PageRank_button_Click(object sender, RoutedEventArgs e)
         {
-            if (flag == 1)
+            if (flag == 1)//Jaccard PageRank
             {
                 Thread pagerank_jaccard_thread = new Thread(() => calc_pageRank_jdistance());
                 pagerank_jaccard_thread.Start();
             }
-            if (flag == 2)
-            {
-                Thread pagerank_cosine_thread = new Thread(() => calc_pageRank_cosineSimilarity());
-                pagerank_cosine_thread.Start();
+            if (flag == 2) //Cosine PageRank
+            {               
+                Thread pagerankCosineThread = new Thread(() => calc_pageRank_cosineSDistance());
+                pagerankCosineThread.Start();
             }
         }
-        private Dictionary<string, int> CreatCountItems(Dictionary<string, int> CountItems)
+        //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+        private void calc_pageRank_cosineSDistance()
         {
+            //START TIMER
+            stopWatch.Reset();
+            stopWatch.Start();
+            timer.Start();
+
+            Dictionary<string, int> countValues = CreatCountItems();
+            Dictionary<string, float> frequnceDict = initFreqDict(countValues);
+            printInverseDict(frequnceDict);
+            float[][] CosinePagerankMatrix = calc_CosineDistancePagerank(frequnceDict);
+            //printMatrix(CosinePagerankMatrix);
+            PageRank_calculate(CosinePagerankMatrix);
+
+            timer.Stop();
+            stopWatch.Stop();
+            UiInvoke(() => MessageBox.Show(String.Format("Finish - PageRank Cosine Distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
+        }
+        private void PageRank_calculate(float[][] CosinePagerankMatrix)
+        {
+            double divEpsilon = 1.0, Epsilon = 1.0, newEpsilon = 0.0;
+            double[] PageRank = new double[linesNumber];
+            double[] newPageRank = new double[linesNumber];
+            Dictionary<int, double> RankDict;
+            double sumVector, sumPR;
+            double d = 0.85;
+            for (int i = 0; i < linesNumber; i++)
+            {
+                PageRank[i] = (float)1 / linesNumber;
+            }
+            RankDict = initRankDictionary(PageRank);
+            int iteration = 0;
+            string print = "\n\n########################################  PAGERANK CALCULATES:  ########################################\n";
+            UiInvoke(() => txtEditor.Text += print);
+
+            while (divEpsilon > 0.01)
+            {
+                print = string.Format("\nIteration number {0}: \n", iteration);
+                UiInvoke(() => txtEditor.Text += print);
+               
+                //calc--> matrix * vector
+                for (int i = 0; i < linesNumber; i++)
+                {
+                    sumPR = 0;
+                    for (int j = 0; j < linesNumber; j++)
+                    {
+                        sumPR += CosinePagerankMatrix[j][i];
+                    }
+                    newPageRank[i] = (1 - d) + d * (sumPR);
+                }
+                //for (int i = 0; i < linesNumber; i++)
+                //{
+                //    newPageRank[i] = 0;
+                //    for (int j = 0; j < linesNumber; j++)
+                //    {
+                //        newPageRank[i] += (CosinePagerankMatrix[i][j] * PageRank[j]);
+                //    }
+                //}
+                sumVector = 0; 
+                for (int i = 0; i < linesNumber; i++)
+                {
+                    sumVector += newPageRank[i];
+                }
+                for (int i = 0; i < linesNumber; i++)
+                {
+                    newPageRank[i] = newPageRank[i] / sumVector;
+                }
+                //calc difference between the old pagerank and new pagerank
+                newEpsilon = 0.0;
+                for (int i = 0; i < linesNumber; i++)
+                    newEpsilon += Math.Pow(newPageRank[i] - PageRank[i], 2);
+                newEpsilon = Math.Sqrt(newEpsilon);
+                divEpsilon = Math.Abs(newEpsilon - Epsilon) / Epsilon;
+                Epsilon = newEpsilon;
+                //copy
+                for (int i = 0; i < linesNumber; i++)
+                {
+                    PageRank[i] = newPageRank[i];
+                }
+                RankDict = updateRankDictionary(newPageRank, RankDict);
+                printMaxRanks(RankDict);
+
+                iteration++;
+            }
+        }
+        private void printMaxRanks(Dictionary<int, double> temp)
+        {
+            int k = 5;
+            var items = (from pair in temp
+                        orderby pair.Value descending
+                        select pair).ToDictionary(pair => pair.Key, pair => pair.Value).Take(k);
+
+            // Display results.
+            string print = string.Format("\nThe {0} max ranked lines are:\n",k);
+            foreach (KeyValuePair<int, double> pair in items)
+            {
+                print += string.Format("line {0}:   {1}\n", pair.Key, pair.Value);
+                for (int i = 0; i < FileMatrix[pair.Key].Length; i++)
+                    print += FileMatrix[pair.Key][i] + " ";
+                print += ("\n----------------------------------------------------------------------------------------------------------------------------------\n");
+            }
+            UiInvoke(() => txtEditor.Text += print);
+        }
+        private Dictionary<int, double> initRankDictionary (double[] rank)
+        {
+            Dictionary<int, double> rankDict = new Dictionary<int, double>();
+            for (int i=0; i<rank.Length; i++)
+                rankDict.Add(i, rank[i]);
+            return rankDict;
+        }
+        private Dictionary<int, double> updateRankDictionary(double[] rank, Dictionary<int,double> rankDict)
+        {
+            for (int i = 0; i < rank.Length; i++)
+                rankDict[i] = rank[i];
+            return rankDict;
+        }
+        private void printInverseDict(Dictionary<string, float> frequnceDict)
+        {
+            string print = "\nThe Inverse frequency vector:\n";
+            foreach (KeyValuePair<string,float> item in frequnceDict)
+            {
+                print += string.Format("{0}-->{1}  |  ", item.Key, item.Value);
+            }
+            UiInvoke(() => txtEditor.Text = print);
+        }
+        private void printMatrix(float [][] cosinePagerankMatrix)
+        {
+            string print = "\n\nCosine distance matrix:";
+            for (int i = 0; i < linesNumber; i++)
+            {
+                print += "\n";
+                for (int j = 0; j < linesNumber; j++)
+                {
+                    print += " | " + cosinePagerankMatrix[i][j];
+                }
+            }
+            UiInvoke(() => txtEditor.Text += print);
+        }
+        //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+        
+        private Dictionary<string, int> CreatCountItems()
+        {
+            Dictionary<string, int> CountItems = new Dictionary<string, int>();
             foreach (string key in hashSet)
             {
                 CountItems.Add(key, 0);
@@ -348,13 +490,21 @@ namespace FinalProject
             }
             return CountItems;
         }
-        private Dictionary<string, float> initDict(Dictionary<string, float> dict)
+        private Dictionary<string, float> initFreqDict(Dictionary<string, int> CountItems)
         {
+
+            Dictionary<string, float> frequnceDict = new Dictionary<string, float>();
             foreach (string key in hashSet)
             {
-                dict.Add(key, 0);
+                frequnceDict.Add(key, 0);
             }
-            return dict;
+            int maxValue = CountItems.Values.Max();
+            foreach (KeyValuePair<string, int> item in CountItems)
+            {
+                frequnceDict[item.Key] = (float)maxValue / (float)CountItems[item.Key];
+                //frequnceDict[item.Key] = (float)Math.Log(((double)maxValue / (double)CountItems[item.Key]) + 1);
+            }
+            return frequnceDict;
         }
         private void calc_pageRank_jdistance()
         {
@@ -368,8 +518,8 @@ namespace FinalProject
             Dictionary<string, float> frequnceDict = new Dictionary<string, float>();
             double[] PageRank = new double[linesNumber];
             double[] newPageRank = new double[linesNumber];
-            CountItems = CreatCountItems(CountItems);
-            frequnceDict = initDict(frequnceDict);
+            CountItems = CreatCountItems();
+            frequnceDict = initFreqDict(CountItems);
             maxValue = CountItems.Values.Max();
             // update all the vactors with the inverse frequnce for each value
             foreach (KeyValuePair<string, int> item in CountItems)
@@ -377,8 +527,8 @@ namespace FinalProject
                 frequnceDict[item.Key] = (float)maxValue / (float)CountItems[item.Key];
                 //frequnceDict[item.Key] = (float)Math.Log(((double)maxValue / (double)CountItems[item.Key]) + 1);
             }
-            float [][] jaccardPagerankMatrix = calc_JDistancePagerank(frequnceDict);
-            //initial pageran -> 1 / lines
+            float [][] jaccardPagerankMatrix = calc_CosineDistancePagerank(frequnceDict);
+            //initial pagerank -> 1 / lines
             for (int i = 0; i < linesNumber; i++)
             {
                 PageRank[i] = (float)1 / linesNumber;
@@ -386,7 +536,7 @@ namespace FinalProject
             
             int iteration = 0;
             string print;
-            while (divEpsilon > 0.01)
+            while (divEpsilon > 0.01 || iteration < 20)
             {
                 print = string.Format("\n\nIteration number {0}: \nThe 5 max pageRank values are:\n", iteration);
                 newEpsilon = 0.0;
@@ -410,9 +560,10 @@ namespace FinalProject
                 {
                     PageRank[i] = newPageRank[i];
                 }
-                newPageRank = bubbleRank(newPageRank);
+                //newPageRank = bubbleRank(newPageRank);
                 UiInvoke(() => txtEditor.Text += print);
-                for (int i = 0; i < 5; i++)
+                //####################################################################################################
+                for (int i = 0; i < linesNumber; i++)
                 {
                     UiInvoke(() => txtEditor.Text += "\n" + newPageRank[i].ToString());
                 }
@@ -461,7 +612,7 @@ namespace FinalProject
                 {
                     PageRank[i] = newPageRank[i];
                 }
-                newPageRank = bubbleRank(newPageRank);
+                //newPageRank = bubbleRank(newPageRank);
                 UiInvoke(() => txtEditor.Text += print);
                 for (int i = 0; i < 5; i++)
                 {
@@ -476,25 +627,7 @@ namespace FinalProject
             UiInvoke(() => MessageBox.Show(String.Format("Finish - PageRank jaccard on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
 
         }
-        private double[] bubbleRank(double[] temp)
-        {
-            double t;
-            for (int i = linesNumber - 1; i > 0; i--)
-            {
-                for (int j = 0; j < i; j++)
-                {
-                    if (temp[j] < temp[j + 1])
-                    {
-                        t = temp[j + 1];
-                        temp[j + 1] = temp[j];
-                        temp[j] = t;
-                    }
-
-                }
-            }
-            return temp;
-        }
-        public float[][] calc_JDistancePagerank(Dictionary<string, float> frequnceDict)
+        public float[][] calc_CosineDistancePagerank(Dictionary<string, float> frequnceDict)
         {
             Dictionary<string, float>[] freqDictionaries;
             freqDictionaries = new Dictionary<string, float>[linesNumber];
@@ -514,7 +647,7 @@ namespace FinalProject
             double numerator;
             double denominatorA, denominatorB;
           //  double numerator, denominator;
-            float[][] jaccardPagerankMatrix = new float[linesNumber][];
+            float[][] cosinePagerankMatrix = new float[linesNumber][];
             //for (int i = 0; i < linesNumber; i++)
             //{
             //    Jdistance[i] = new float[linesNumber];
@@ -560,7 +693,7 @@ namespace FinalProject
 
              for (int i = 0; i<linesNumber; i++)
             {
-                jaccardPagerankMatrix[i] = new float[linesNumber];
+                cosinePagerankMatrix[i] = new float[linesNumber];
                 for (int j = i; j<linesNumber; j++)
                 {
                     numerator = 0;
@@ -574,17 +707,17 @@ namespace FinalProject
                         denominatorB += Math.Pow(freqDictionaries[j][item.Key], 2);
                     }
                     if (denominatorA == 0 || denominatorB == 0) //checking Division by zero
-                        jaccardPagerankMatrix[i][j] = 0;
+                        cosinePagerankMatrix[i][j] = 0;
                     else
-                        jaccardPagerankMatrix[i][j] = 1- ((float)(numerator / (Math.Sqrt(denominatorA) * Math.Sqrt(denominatorB))));
+                        cosinePagerankMatrix[i][j] = 1- ((float)(numerator / (Math.Sqrt(denominatorA) * Math.Sqrt(denominatorB))));
                 }
             }
 
             for (int i = 0; i < linesNumber; i++)
                 for (int j = 0; i > j; j++)
-                    if (jaccardPagerankMatrix[i][j] == 0)
-                        jaccardPagerankMatrix[i][j] = jaccardPagerankMatrix[j][i];
-            return jaccardPagerankMatrix;
+                    if (cosinePagerankMatrix[i][j] == 0)
+                        cosinePagerankMatrix[i][j] = cosinePagerankMatrix[j][i];
+            return cosinePagerankMatrix;
         }
         //#########################################################################  K-MEANS  #########################################################################
         private void kmeans_button_Click(object sender, RoutedEventArgs e)
