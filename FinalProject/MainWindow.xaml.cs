@@ -369,10 +369,7 @@ namespace FinalProject
             double[] sumPR= new double[linesNumber];
             double d = 0.85;
             //************************  INIT  ************************
-            //for(int i = 0 ;i < linesNumber ; i++)
-            //{
-            //    PageRank[i]= (float)1/ linesNumber;
-            //}
+            
             double rank = (float) 1 / linesNumber;
             for (int i = 0; i < linesNumber; i++)
             {
@@ -382,7 +379,6 @@ namespace FinalProject
                     sumPR[i] += CosinePagerankMatrix[j][i];
                 }
                 PageRank[i] = rank * sumPR[i];
-                UiInvoke(() => txtEditor.Text += string.Format("\nINIT PR {0} ",PageRank[i] ));
             }
 
             //************************************************
@@ -474,7 +470,7 @@ namespace FinalProject
             {
                 print += string.Format("{0}-->{1}  |  ", item.Key, item.Value);
 
-                UiInvoke(() => txtEditor.Text += print);
+                UiInvoke(() => txtEditor.Text = print);
             }
         }
         private void printMatrix(float[][] cosinePagerankMatrix)
