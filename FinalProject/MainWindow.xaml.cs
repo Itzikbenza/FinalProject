@@ -364,26 +364,24 @@ namespace FinalProject
             double divEpsilon = 1.0, Epsilon = 1.0, newEpsilon = 0.0;
             double[] PageRank = new double[linesNumber];
             double[] newPageRank = new double[linesNumber];
-            Dictionary<int, double> RankDict;
-            double sumVector;
-            double[] sumPR= new double[linesNumber];
+            Dictionary<int, double> RankDictionary;
+            double sumVector, sumPR;
             double d = 0.85;
             //************************  INIT  ************************
             
             double rank = (float) 1 / linesNumber;
             for (int i = 0; i < linesNumber; i++)
             {
-                sumPR[i] = 0;
+                sumPR = 0;
                 for (int j = 0; j < linesNumber; j++)
                 {
-                    sumPR[i] += CosinePagerankMatrix[j][i];
+                    sumPR += CosinePagerankMatrix[j][i];
                 }
-                PageRank[i] = rank * sumPR[i];
+                PageRank[i] = rank * sumPR;
             }
-
+            RankDictionary = initRankDictionary(PageRank);
             //************************************************
-            RankDict = initRankDictionary(PageRank);
-            int iteration = 0;
+            int iteration = 1;
             string print = "\n\n########################################  PAGERANK CALCULATES:  ########################################\n";
             UiInvoke(() => txtEditor.Text += print);
 
@@ -392,43 +390,33 @@ namespace FinalProject
                 print = string.Format("\nIteration number {0}: \n", iteration);
                 UiInvoke(() => txtEditor.Text += print);
 
-                //calc--> matrix * vector
+                //calc--> NewPageRank
                 for (int i = 0; i < linesNumber; i++)
-                {
                     newPageRank[i] = (1 - d) + d * PageRank[i];
-                }
-
-                //for (int i = 0; i < linesNumber; i++)
-                //{
-                //    newPageRank[i] = 0;
-                //    for (int j = 0; j < linesNumber; j++)
-                //    {
-                //        newPageRank[i] += (CosinePagerankMatrix[i][j] * PageRank[j]);
-                //    }
-                //}
                 sumVector = 0;
                 for (int i = 0; i < linesNumber; i++)
-                {
                     sumVector += newPageRank[i];
-                }
                 for (int i = 0; i < linesNumber; i++)
-                {
                     newPageRank[i] = newPageRank[i] / sumVector;
-                }
+
                 //calc difference between the old pagerank and new pagerank
                 newEpsilon = 0.0;
                 for (int i = 0; i < linesNumber; i++)
                     newEpsilon += Math.Pow(newPageRank[i] - PageRank[i], 2);
                 newEpsilon = Math.Sqrt(newEpsilon);
-                divEpsilon = Math.Abs(newEpsilon - Epsilon) / Epsilon;
+                divEpsilon = Math.Abs(newEpsilon - Epsilon);
+
+                //copy - for the next iteration
                 Epsilon = newEpsilon;
-                //copy
                 for (int i = 0; i < linesNumber; i++)
                 {
                     PageRank[i] = newPageRank[i];
                 }
-                RankDict = updateRankDictionary(newPageRank, RankDict);
-                printMaxRanks(RankDict, K);
+
+                //Update rankDictionary and print K max Ranked
+                for (int i = 0; i < newPageRank.Length; i++)
+                    RankDictionary[i] = newPageRank[i];
+                printMaxRanks(RankDictionary, K);
 
                 iteration++;
             }
