@@ -155,157 +155,8 @@ namespace FinalProject
             print += string.Format("\n\nThe DataSet include {0} values", hashSet.Count.ToString());
             UiInvoke(() => txtEditor.Text += print);
         }
-        //#########################################################################  JACCARD DISTANCE  #########################################################################
-        private void Jaccard_Kmeans()
-        {
-            stopWatch.Reset();
-            stopWatch.Start();
-            timer.Start();
-            //Thread creation
-            Thread normalizeThread = new Thread(() => NormalizationData(FileBuff));
-            Thread jDistanceThread = new Thread(() => calc_JDistance());
 
-            normalizeThread.Start();
-            normalizeThread.Join();
-            ShowHsahSet();
-            jDistanceThread.Start();
-        }
-        public void calc_JDistance()
-        {
-            float intersect, union;
-            JdistanceKmeans = new float[linesNumber][];
-            for (int i = 0; i < linesNumber; i++)
-            {
-                JdistanceKmeans[i] = new float[linesNumber];
-                for (int j = i; j < linesNumber; j++)
-                {
-                    intersect = 0;
-                    union = 0;
-                    foreach (KeyValuePair<string, int> item in arrayDictionaries[j])
-                    {
-                        if (arrayDictionaries[i][item.Key] > 0 && arrayDictionaries[j][item.Key] > 0)
-                            intersect++;
-                        if (arrayDictionaries[i][item.Key] > 0 || arrayDictionaries[j][item.Key] > 0)
-                            union++;
-                    }
-                    JdistanceKmeans[i][j] = 1 - intersect / union;
-                }
-            }
-            for (int i = 0; i < linesNumber; i++)
-                for (int j = 0; i > j; j++)
-                    if (JdistanceKmeans[i][j] == 0)
-                        JdistanceKmeans[i][j] = JdistanceKmeans[j][i];
-            // After finish jaccard calculates
-            timer.Stop();
-            stopWatch.Stop();
-            UiInvoke(() => MessageBox.Show(String.Format("Finish - Jaccard distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
-            Thread KmeansByJaccard = new Thread(() => kmeans_by_Jaccard_algorithm());
-            KmeansByJaccard.SetApartmentState(ApartmentState.STA);
-            KmeansByJaccard.Start();
-        }
-        
-        //IEnumerable<string> union, intersect;
-        //float interCount = 0, unionCount = 0;
-        //float[][] tempDis;
-        //string[][] temp;
-        //lock (thisLock)
-        //{
-        //    temp = FileMatrix;
-        //    tempDis = Jdistance;
-        //}
-
-        //for (int i = start; i < end; i++)
-        //{
-        //    Jdistance[i] = new float[linesNumber];
-        //    for (int j = i; j < linesNumber; j++)
-        //    {
-        //        union = temp[i].Union(temp[j]);
-        //        unionCount = union.Count<string>();
-        //        intersect = temp[i].Intersect(temp[j]);
-        //        interCount = intersect.Count<string>();
-
-        //        if (unionCount != 0)
-        //            tempDis[i][j] = 1 - (interCount / unionCount);
-        //        else
-        //            tempDis[i][j] = 0;
-        //    }
-        //}
-        //lock (thisLock)
-        //{
-        //    Array.Copy(tempDis, start, Jdistance, start, end - start);
-        //    threadCounter--;
-        //    UiInvoke(() => txtEditor.Text += "Thread number " + numOfThread + " is finish\n");
-        //    if (threadCounter == 0)
-        //    {
-        //        for (int i = 0; i < linesNumber; i++)
-        //            for (int j = 0; j < linesNumber; j++)
-        //                if (Jdistance[i][j] == 0 && i != j)
-        //                    Jdistance[i][j] = Jdistance[j][i];
-
-        //        timer.Stop();
-        //        stopWatch.Stop();
-        //        UiInvoke(() => MessageBox.Show(String.Format("Finish - Jaccard distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
-        //        UiInvoke(() => txtEditor.Text = String.Join(" ", Jdistance[0].Select(p => p.ToString()).ToArray()));
-        //        threadCounter = 3;
-        //    }
-        //}
-
-        //#########################################################################  COSINE DISTANCE  #########################################################################
-        private void Cosine_Kmeans()
-        {
-            stopWatch.Reset();
-            stopWatch.Start();
-            timer.Start();
-            //Thread creation
-            Thread normalizeThread = new Thread(() => NormalizationData(FileBuff));
-            Thread cosineDistanceThread = new Thread(() => calc_CosineDistance());
-
-            normalizeThread.Start();
-            normalizeThread.Join();
-            ShowHsahSet();
-            cosineDistanceThread.Start();
-        }
-        public void calc_CosineDistance()
-        {
-            double numerator;
-            double denominatorA, denominatorB;
-            CosineDistanceKmeans = new float[linesNumber][];
-
-            for (int i = 0; i < linesNumber; i++)
-            {
-                CosineDistanceKmeans[i] = new float[linesNumber];
-                for (int j = i; j < linesNumber; j++)
-                {
-                    numerator = 0;
-                    denominatorA = 0;
-                    denominatorB = 0;
-
-                    foreach (KeyValuePair<string, int> item in arrayDictionaries[i])
-                    {
-                        numerator += arrayDictionaries[j][item.Key] * item.Value;
-                        denominatorA += Math.Pow(item.Value, 2);
-                        denominatorB += Math.Pow(arrayDictionaries[j][item.Key], 2);
-                    }
-                    if (denominatorA == 0 || denominatorB == 0) //checking Division by zero
-                        CosineDistanceKmeans[i][j] = 0;
-                    else
-                        CosineDistanceKmeans[i][j] = 1 - ((float)(numerator / (Math.Sqrt(denominatorA) * Math.Sqrt(denominatorB))));
-                }
-            }
-            for (int i = 0; i < linesNumber; i++)
-                for (int j = 0; i > j; j++)
-                    if (CosineDistanceKmeans[i][j] == 0.0)
-                        CosineDistanceKmeans[i][j] = CosineDistanceKmeans[j][i];
-            // After finish cosine calculates
-            timer.Stop();
-            stopWatch.Stop();
-            UiInvoke(() => MessageBox.Show(String.Format("Finish - Cosine distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
-            Thread KmeansByCosine = new Thread(() => kmeans_by_Cosine_algorithm());
-            KmeansByCosine.SetApartmentState(ApartmentState.STA);
-            KmeansByCosine.Start();
-        }
-       
-        //#########################################################################  PAGERANK  #########################################################################
+        //##########################################################  PAGERANK  ##########################################################
         private void PageRank_button_Click(object sender, RoutedEventArgs e)
         {
             if (Jaccard_radioButton.IsChecked == false && Cosine_radioButton.IsChecked == false)
@@ -331,24 +182,7 @@ namespace FinalProject
                     Cosine_PageRank();
                 }
             }
-            //string question = "How many max ranked rows do you want to show?";
-            //int kValue;
-            //kInputWindow kInput = new kInputWindow(question, linesNumber);
-            //kInput.ShowDialog();
-            //if (kInput.DialogResult.HasValue && kInput.DialogResult.Value)
-            //{
-            //    kValue = Convert.ToInt32(kInput.Answer); // K input
-            //    if (flag == 1)//Jaccard PageRank
-            //    {
-            //        Thread pagerank_jaccard_thread = new Thread(() => calc_pageRank_jdistance());
-            //        pagerank_jaccard_thread.Start();
-            //    }
-            //    if (flag == 2) //Cosine PageRank
-            //    {
-            //        Thread pagerankCosineThread = new Thread(() => calc_PageRank_cosineDistance());
-            //        pagerankCosineThread.Start();
-            //    }
-            }
+        }
 
         private void Cosine_PageRank()
         {
@@ -363,9 +197,8 @@ namespace FinalProject
             normalizeThread.Start();
             normalizeThread.Join();
             ShowHsahSet();
-            cosinePRThread.Start();   
+            cosinePRThread.Start();
         }
-        //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
         private void calc_PageRank_cosineDistance()
         {
             Dictionary<string, int> countValues = CreatCountItems();
@@ -402,7 +235,7 @@ namespace FinalProject
             }
         }
         private void PageRank_Cosine_Calculate(int K)
-        {           
+        {
             double[] PageRank = new double[linesNumber];
             double[] newPageRank = new double[linesNumber];
             Dictionary<int, double> RankDictionary;
@@ -507,21 +340,6 @@ namespace FinalProject
                 print += string.Format("{0}-->{1}  |  ", item.Key, item.Value);
             UiInvoke(() => txtEditor.Text += print);
         }
-        private void printMatrix(float[][] cosinePagerankMatrix)
-        {
-            string print = "\n\nCosine distance matrix:";
-            for (int i = 0; i < linesNumber; i++)
-            {
-                print += "\n";
-                for (int j = 0; j < linesNumber; j++)
-                {
-                    print += " | " + cosinePagerankMatrix[i][j];
-                }
-            }
-            UiInvoke(() => txtEditor.Text += print);
-        }
-        //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
         private Dictionary<string, int> CreatCountItems()
         {
             Dictionary<string, int> CountItems = new Dictionary<string, int>();
@@ -554,7 +372,81 @@ namespace FinalProject
             }
             return frequnceDict;
         }
-        
+        public void calc_CosineDistancePagerank(Dictionary<string, float> frequnceDict)
+        {
+            //Create an inverse frequency normaliztion vectors
+            Dictionary<string, float>[] freqDictionaries;
+            freqDictionaries = new Dictionary<string, float>[linesNumber];
+            for (int i = 0; i < linesNumber; i++)
+            {
+                freqDictionaries[i] = new Dictionary<string, float>();
+                foreach (KeyValuePair<string, float> item in frequnceDict)
+                {
+                    if (arrayDictionaries[i][item.Key] > 0)
+                    {
+                        freqDictionaries[i][item.Key] = frequnceDict[item.Key];
+                    }
+                    else
+                        freqDictionaries[i][item.Key] = 0;
+                }
+            }
+
+            double numerator;
+            double denominatorA, denominatorB;
+            CosineDistancePR = new float[linesNumber][];
+
+            //000000000000000000000000000000000000000000000000000000000000000000
+            //for (int i = 0; i < linesNumber; i++)
+            //{
+            //    jaccardPagerankMatrix[i] = new float[linesNumber];
+            //    for (int j = i; j < linesNumber; j++)
+            //{
+            //    numerator = 0;
+            //    denominator = 0;
+            //    foreach (KeyValuePair<string, float> item in freqDictionaries[j])
+            //    {
+            //        numerator += freqDictionaries[i][item.Key] * freqDictionaries[j][item.Key];
+            //        denominator += Math.Pow(freqDictionaries[i][item.Key] + freqDictionaries[j][item.Key], 2);
+            //    }
+            //    try
+            //    {
+            //        denominator = Math.Sqrt(denominator);
+            //        jaccardPagerankMatrix[i][j] = 1 - (float)(numerator / denominator);
+            //    }
+            //    catch
+            //    {
+            //        MessageBox.Show("Error: division by zero", "Divide By Zero", MessageBoxButton.OK, MessageBoxImage.Error);
+            //    }
+            //000000000000000000000000000000000000000000000000000000000000000000
+
+            for (int i = 0; i < linesNumber; i++)
+            {
+                CosineDistancePR[i] = new float[linesNumber];
+                for (int j = i; j < linesNumber; j++)
+                {
+                    numerator = 0;
+                    denominatorA = 0;
+                    denominatorB = 0;
+
+                    foreach (KeyValuePair<string, float> item in freqDictionaries[i])
+                    {
+                        numerator += freqDictionaries[j][item.Key] * item.Value;
+                        denominatorA += Math.Pow(item.Value, 2);
+                        denominatorB += Math.Pow(freqDictionaries[j][item.Key], 2);
+                    }
+                    if (denominatorA == 0 || denominatorB == 0) //checking Division by zero
+                        CosineDistancePR[i][j] = 0;
+                    else
+                        CosineDistancePR[i][j] = 1 - ((float)(numerator / (Math.Sqrt(denominatorA) * Math.Sqrt(denominatorB))));
+                }
+            }
+
+            for (int i = 0; i < linesNumber; i++)
+                for (int j = 0; i > j; j++)
+                    if (CosineDistancePR[i][j] == 0)
+                        CosineDistancePR[i][j] = CosineDistancePR[j][i];
+        }
+        // OLD PAGERANK
         private void calc_pageRank_cosineSimilarity()
         {
             stopWatch.Reset();
@@ -607,81 +499,8 @@ namespace FinalProject
             UiInvoke(() => MessageBox.Show(String.Format("Finish - PageRank jaccard on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
 
         }
-        public void calc_CosineDistancePagerank(Dictionary<string, float> frequnceDict)
-        {
-            //Create an inverse frequency normaliztion vectors
-            Dictionary<string, float>[] freqDictionaries;
-            freqDictionaries = new Dictionary<string, float>[linesNumber];
-            for (int i = 0; i < linesNumber; i++)
-            {
-                freqDictionaries[i] = new Dictionary<string, float>();
-                foreach (KeyValuePair<string, float> item in frequnceDict)
-                {
-                    if (arrayDictionaries[i][item.Key] > 0)
-                    {
-                        freqDictionaries[i][item.Key] = frequnceDict[item.Key];
-                    }
-                    else
-                        freqDictionaries[i][item.Key] = 0;
-                }
-            }
-
-            double numerator;
-            double denominatorA, denominatorB;
-            CosineDistancePR = new float[linesNumber][];
-            
-            //000000000000000000000000000000000000000000000000000000000000000000
-            //for (int i = 0; i < linesNumber; i++)
-            //{
-            //    jaccardPagerankMatrix[i] = new float[linesNumber];
-            //    for (int j = i; j < linesNumber; j++)
-            //{
-            //    numerator = 0;
-            //    denominator = 0;
-            //    foreach (KeyValuePair<string, float> item in freqDictionaries[j])
-            //    {
-            //        numerator += freqDictionaries[i][item.Key] * freqDictionaries[j][item.Key];
-            //        denominator += Math.Pow(freqDictionaries[i][item.Key] + freqDictionaries[j][item.Key], 2);
-            //    }
-            //    try
-            //    {
-            //        denominator = Math.Sqrt(denominator);
-            //        jaccardPagerankMatrix[i][j] = 1 - (float)(numerator / denominator);
-            //    }
-            //    catch
-            //    {
-            //        MessageBox.Show("Error: division by zero", "Divide By Zero", MessageBoxButton.OK, MessageBoxImage.Error);
-            //    }
-            //000000000000000000000000000000000000000000000000000000000000000000
-
-            for (int i = 0; i < linesNumber; i++)
-            {
-                CosineDistancePR[i] = new float[linesNumber];
-                for (int j = i; j < linesNumber; j++)
-                {
-                    numerator = 0;
-                    denominatorA = 0;
-                    denominatorB = 0;
-
-                    foreach (KeyValuePair<string, float> item in freqDictionaries[i])
-                    {
-                        numerator += freqDictionaries[j][item.Key] * item.Value;
-                        denominatorA += Math.Pow(item.Value, 2);
-                        denominatorB += Math.Pow(freqDictionaries[j][item.Key], 2);
-                    }
-                    if (denominatorA == 0 || denominatorB == 0) //checking Division by zero
-                        CosineDistancePR[i][j] = 0;
-                    else
-                        CosineDistancePR[i][j] = 1 - ((float)(numerator / (Math.Sqrt(denominatorA) * Math.Sqrt(denominatorB))));
-                }
-            }
-
-            for (int i = 0; i < linesNumber; i++)
-                for (int j = 0; i > j; j++)
-                    if (CosineDistancePR[i][j] == 0)
-                        CosineDistancePR[i][j] = CosineDistancePR[j][i];
-        }
-        //#########################################################################  K-MEANS  #########################################################################
+        
+        //##########################################################  K-MEANS  ##########################################################
         private void kmeans_button_Click(object sender, RoutedEventArgs e)
         {
             if (Jaccard_radioButton.IsChecked == false && Cosine_radioButton.IsChecked == false)
@@ -708,7 +527,151 @@ namespace FinalProject
                 }
             }
         }
-    
+        private void Jaccard_Kmeans()
+        {
+            stopWatch.Reset();
+            stopWatch.Start();
+            timer.Start();
+            //Thread creation
+            Thread normalizeThread = new Thread(() => NormalizationData(FileBuff));
+            Thread jDistanceThread = new Thread(() => calc_JDistance());
+
+            normalizeThread.Start();
+            normalizeThread.Join();
+            ShowHsahSet();
+            jDistanceThread.Start();
+        }
+        public void calc_JDistance()
+        {
+            float intersect, union;
+            JdistanceKmeans = new float[linesNumber][];
+            for (int i = 0; i < linesNumber; i++)
+            {
+                JdistanceKmeans[i] = new float[linesNumber];
+                for (int j = i; j < linesNumber; j++)
+                {
+                    intersect = 0;
+                    union = 0;
+                    foreach (KeyValuePair<string, int> item in arrayDictionaries[j])
+                    {
+                        if (arrayDictionaries[i][item.Key] > 0 && arrayDictionaries[j][item.Key] > 0)
+                            intersect++;
+                        if (arrayDictionaries[i][item.Key] > 0 || arrayDictionaries[j][item.Key] > 0)
+                            union++;
+                    }
+                    JdistanceKmeans[i][j] = 1 - intersect / union;
+                }
+            }
+            for (int i = 0; i < linesNumber; i++)
+                for (int j = 0; i > j; j++)
+                    if (JdistanceKmeans[i][j] == 0)
+                        JdistanceKmeans[i][j] = JdistanceKmeans[j][i];
+            // After finish jaccard calculates
+            timer.Stop();
+            stopWatch.Stop();
+            UiInvoke(() => MessageBox.Show(String.Format("Finish - Jaccard distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
+            Thread KmeansByJaccard = new Thread(() => kmeans_by_Jaccard_algorithm());
+            KmeansByJaccard.SetApartmentState(ApartmentState.STA);
+            KmeansByJaccard.Start();
+        }
+        private void Cosine_Kmeans()
+        {
+            stopWatch.Reset();
+            stopWatch.Start();
+            timer.Start();
+            //Thread creation
+            Thread normalizeThread = new Thread(() => NormalizationData(FileBuff));
+            Thread cosineDistanceThread = new Thread(() => calc_CosineDistance());
+
+            normalizeThread.Start();
+            normalizeThread.Join();
+            ShowHsahSet();
+            cosineDistanceThread.Start();
+        }
+        public void calc_CosineDistance()
+        {
+            double numerator;
+            double denominatorA, denominatorB;
+            CosineDistanceKmeans = new float[linesNumber][];
+
+            for (int i = 0; i < linesNumber; i++)
+            {
+                CosineDistanceKmeans[i] = new float[linesNumber];
+                for (int j = i; j < linesNumber; j++)
+                {
+                    numerator = 0;
+                    denominatorA = 0;
+                    denominatorB = 0;
+
+                    foreach (KeyValuePair<string, int> item in arrayDictionaries[i])
+                    {
+                        numerator += arrayDictionaries[j][item.Key] * item.Value;
+                        denominatorA += Math.Pow(item.Value, 2);
+                        denominatorB += Math.Pow(arrayDictionaries[j][item.Key], 2);
+                    }
+                    if (denominatorA == 0 || denominatorB == 0) //checking Division by zero
+                        CosineDistanceKmeans[i][j] = 0;
+                    else
+                        CosineDistanceKmeans[i][j] = 1 - ((float)(numerator / (Math.Sqrt(denominatorA) * Math.Sqrt(denominatorB))));
+                }
+            }
+            for (int i = 0; i < linesNumber; i++)
+                for (int j = 0; i > j; j++)
+                    if (CosineDistanceKmeans[i][j] == 0.0)
+                        CosineDistanceKmeans[i][j] = CosineDistanceKmeans[j][i];
+            // After finish cosine calculates
+            timer.Stop();
+            stopWatch.Stop();
+            UiInvoke(() => MessageBox.Show(String.Format("Finish - Cosine distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
+            Thread KmeansByCosine = new Thread(() => kmeans_by_Cosine_algorithm());
+            KmeansByCosine.SetApartmentState(ApartmentState.STA);
+            KmeansByCosine.Start();
+        }
+        //IEnumerable<string> union, intersect;
+        //float interCount = 0, unionCount = 0;
+        //float[][] tempDis;
+        //string[][] temp;
+        //lock (thisLock)
+        //{
+        //    temp = FileMatrix;
+        //    tempDis = Jdistance;
+        //}
+
+        //for (int i = start; i < end; i++)
+        //{
+        //    Jdistance[i] = new float[linesNumber];
+        //    for (int j = i; j < linesNumber; j++)
+        //    {
+        //        union = temp[i].Union(temp[j]);
+        //        unionCount = union.Count<string>();
+        //        intersect = temp[i].Intersect(temp[j]);
+        //        interCount = intersect.Count<string>();
+
+        //        if (unionCount != 0)
+        //            tempDis[i][j] = 1 - (interCount / unionCount);
+        //        else
+        //            tempDis[i][j] = 0;
+        //    }
+        //}
+        //lock (thisLock)
+        //{
+        //    Array.Copy(tempDis, start, Jdistance, start, end - start);
+        //    threadCounter--;
+        //    UiInvoke(() => txtEditor.Text += "Thread number " + numOfThread + " is finish\n");
+        //    if (threadCounter == 0)
+        //    {
+        //        for (int i = 0; i < linesNumber; i++)
+        //            for (int j = 0; j < linesNumber; j++)
+        //                if (Jdistance[i][j] == 0 && i != j)
+        //                    Jdistance[i][j] = Jdistance[j][i];
+
+        //        timer.Stop();
+        //        stopWatch.Stop();
+        //        UiInvoke(() => MessageBox.Show(String.Format("Finish - Jaccard distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
+        //        UiInvoke(() => txtEditor.Text = String.Join(" ", Jdistance[0].Select(p => p.ToString()).ToArray()));
+        //        threadCounter = 3;
+        //    }
+        //}
         private void kmeans_by_Jaccard_algorithm()
         {
             string question = "How many clusters do you want to create?";
@@ -726,7 +689,7 @@ namespace FinalProject
                 kValue = Convert.ToInt32(kInput.Answer); // K input
                 List<int>[] linesClusters; //array of list in size of K, each list have the lines of the cluster
                 bool hasChange = true; //bool flag, if was a cluster change
-                Dictionary<string, float>[] clustCentroid = new Dictionary<string, float>[kValue];               
+                Dictionary<string, float>[] clustCentroid = new Dictionary<string, float>[kValue];
                 int iteration = 1;
 
                 UiInvoke(() => txtEditor.Text = "######################################## K-MEANS BY JACCARD DISTANCE ########################################");
@@ -803,7 +766,7 @@ namespace FinalProject
         }
         private List<int>[] initRandom(int K)
         {
-            bool randFlag; 
+            bool randFlag;
             string print = "\n>>>>>>>>>>  Init iteration  <<<<<<<<<<\n";
             Random random = new Random();
             List<int>[] linesClast = new List<int>[K];
@@ -817,15 +780,15 @@ namespace FinalProject
                     {
                         i--;
                         randFlag = false;
-                        break;      
-                    }                        
+                        break;
+                    }
                 }
                 if (randFlag)
                 {
                     linesClast[i] = new List<int>();
                     linesClast[i].Add(rand);
                     print += string.Format("Line number {0} assigned to cluster number {1}\n", rand, i);
-                }    
+                }
             }
             UiInvoke(() => txtEditor.Text += print);
             return linesClast;
@@ -960,7 +923,7 @@ namespace FinalProject
             //    distance = calc_distance_centroids(oldCentroid[i], centroidClust[i]);
             //    print += string.Format("\nThe distance of centroid {0}: current centriod VS old centroid is {1}", i, distance);
             //}
-            
+
             return centroidClust;
         }
         private bool UpdateClusteringCosine(Dictionary<string, float>[] centroids, List<int>[] lineClusters, int K)
@@ -1136,9 +1099,9 @@ namespace FinalProject
                         ClosestRow = item;
                     }
                 }
-                
+
                 print += string.Format("\nCluster {0} have {1} values.", i, lineClusters[i].Count);
-                print += string.Format("\nThe closest row to centriod {0} is row {1} and the distance is {2}",i, ClosestRow, minDistance);
+                print += string.Format("\nThe closest row to centriod {0} is row {1} and the distance is {2}", i, ClosestRow, minDistance);
                 print += string.Format("\nRow {0} : ", ClosestRow);
                 for (int j = 0; j < FileMatrix[ClosestRow].Length; j++)
                     print += string.Format("{0} ", FileMatrix[ClosestRow][j]);
@@ -1146,6 +1109,7 @@ namespace FinalProject
             }
             UiInvoke(() => txtEditor.Text += print);
         }
+
 
         
     }
