@@ -1,7 +1,7 @@
 ﻿<Window x:Class="FinalProject.Window1"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="DataSet Ranking" Height="671.946" Width="897.679" WindowStartupLocation="CenterScreen">
+        Title="DataSet Ranking" Height="685" Width="1050" WindowStartupLocation="CenterScreen">
     <Grid Background="#FF30D6E1">
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>
@@ -9,21 +9,23 @@
         <Grid.BindingGroup>
             <BindingGroup/>
         </Grid.BindingGroup>
-        <Button x:Name="Open_File"  HorizontalAlignment="Left" Margin="55,75,0,0" VerticalAlignment="Top" Width="140" Height="66" FontFamily="AR JULIAN" FontSize="14" Click="Open_File_Click">
-            <StackPanel>
-                <Image Source="BrIcon.png" Width="158" Height="48" RenderTransformOrigin="-0.349,0.379"/>
+        <Button x:Name="Open_File"  HorizontalAlignment="Left" Margin="181,80,0,0" VerticalAlignment="Top" Width="128" Height="66" FontFamily="AR JULIAN" FontSize="14" Click="Open_File_Click">
+            <StackPanel Width="128" Height="66">
+                <Image Source="BrIcon.png" Width="103" Height="48" RenderTransformOrigin="-0.349,0.379" Margin="12,0"/>
                 <TextBlock Text="Browse" Width="49" Height="22" />
             </StackPanel>
         </Button>
-        <Label Content="DataSet Ranking Application" HorizontalAlignment="Left" Margin="112,0,0,0" VerticalAlignment="Top" Width="684" Height="78" FontFamily="Papyrus" FontSize="48" FontWeight="Bold"/>
-        <TextBox x:Name="txtEditor" HorizontalAlignment="Left" Height="375" Margin="52,159,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="800" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible"/>
-        <Button x:Name="jccard_button" Content="Jaccard Distance" HorizontalAlignment="Left" Margin="429,94,0,0" VerticalAlignment="Top" Width="115" Height="40" FontFamily="AR JULIAN" FontSize="14" Click="jaccard_button_Click"/>
-        <Button x:Name="cosine_button" Content="Cosine Distance" HorizontalAlignment="Left" Margin="574,94,0,0" VerticalAlignment="Top" Width="115" Height="40" FontFamily="AR JULIAN" FontSize="14" Click="cosine_button_Click"/>
-        <Label x:Name="distance_label" Content="Distance By:" HorizontalAlignment="Left" Margin="279,94,0,0" VerticalAlignment="Top" FontFamily="AR JULIAN" FontSize="20" Height="34" Width="116"/>
-        <Button x:Name="PageRank_button" Content="PageRank" HorizontalAlignment="Left" Margin="52,567,0,0" VerticalAlignment="Top" Width="115" Height="40" FontFamily="AR JULIAN" FontSize="14" Click="PageRank_button_Click" IsEnabled="False"/>
-        <Button x:Name="kmeans_button" Content="K-Means" HorizontalAlignment="Left" Margin="279,567,0,0" VerticalAlignment="Top" Width="115" Height="40" FontFamily="AR JULIAN" FontSize="14" Click="kmeans_button_Click" IsEnabled="False"/>
-        <Label x:Name="timer_lebal" Content="Timer:" HorizontalAlignment="Left" Margin="597,571,0,0" VerticalAlignment="Top" Width="79" RenderTransformOrigin="0.54,1.276" FontSize="24" FontFamily="Imprint MT Shadow" Height="39"/>
-        <TextBlock x:Name="ClockTextBlock" HorizontalAlignment="Left" Margin="681,576,0,0" TextWrapping="Wrap" Text="00:00:00" VerticalAlignment="Top" Height="39" Width="160" FontFamily="Imprint MT Shadow" FontSize="24"/>
+        <Label Content="DataSet Ranking Application" HorizontalAlignment="Left" Margin="181,0,0,0" VerticalAlignment="Top" Width="684" Height="78" FontFamily="Papyrus" FontSize="48" FontWeight="Bold"/>
+        <TextBox x:Name="txtEditor" Height="400" Margin="47,159,47,0" TextWrapping="Wrap" VerticalAlignment="Top" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible" IsReadOnly = "True" />
+        <Button x:Name="PageRank_button" Content="PageRank" HorizontalAlignment="Left" Margin="102,583,0,0" VerticalAlignment="Top" Width="115" Height="40" FontFamily="AR JULIAN" FontSize="14" Click="PageRank_button_Click" IsEnabled="False"/>
+        <Button x:Name="kmeans_button" Content="K-Means" HorizontalAlignment="Left" Margin="329,583,0,0" VerticalAlignment="Top" Width="115" Height="40" FontFamily="AR JULIAN" FontSize="14" Click="kmeans_button_Click" IsEnabled="False"/>
+        <Label x:Name="timer_lebal" Content="Timer:" HorizontalAlignment="Left" Margin="698,580,0,0" VerticalAlignment="Top" Width="79" RenderTransformOrigin="0.54,1.276" FontSize="24" FontFamily="Imprint MT Shadow" Height="39"/>
+        <TextBlock x:Name="ClockTextBlock" HorizontalAlignment="Left" Margin="782,585,0,0" TextWrapping="Wrap" Text="00:00:00" VerticalAlignment="Top" Height="39" Width="160" FontFamily="Imprint MT Shadow" FontSize="24"/>
+        <StackPanel Height="42" Margin="342,94,0,0" VerticalAlignment="Top" Width="533" HorizontalAlignment="Left" Orientation="Horizontal">
+            <Label x:Name="DistanceBy_label" Content="Distance By:  " FontFamily="AR JULIAN" FontSize="21.333"/>
+            <RadioButton x:Name="Jaccard_radioButton" Content="Jaccard Distance    " FontSize="21.333" Checked="jaccard_Checked" />
+            <RadioButton x:Name="Cosine_radioButton" Content="Cosine Distance" FontSize="21.333" Checked="cosine_Checked" />
+        </StackPanel>
 
 
 

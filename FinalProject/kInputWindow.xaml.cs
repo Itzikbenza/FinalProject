@@ -36,8 +36,10 @@ namespace FinalProject
         {
             if (string.IsNullOrEmpty(Answer))
                 MessageBox.Show("Please enter number!", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+            else if (Convert.ToInt32(Answer) <= 0 || Convert.ToInt32(Answer) > kMax)
+                MessageBox.Show(string.Format("Please enter a valid number: greater than 0 and less than number of lines ({0}) !", kMax), "Information", MessageBoxButton.OK, MessageBoxImage.Information);
             else
-            this.DialogResult = true;
+                this.DialogResult = true;
         }
 
         private void Window_ContentRendered(object sender, EventArgs e)
