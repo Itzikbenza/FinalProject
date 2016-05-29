@@ -42,6 +42,7 @@ namespace FinalProject
         string[][] FileMatrix; //matrix of the file readed
         string[] lines; //array of string - the lines of the file readed
         string FileBuff; //buffer of the file readed
+        bool flagKmeans = false, flagPageRank = false;
 
         FileInfo fileLoaded = new FileInfo("file");
         Object thisLock = new Object(); //object lock critical section
@@ -1080,6 +1081,20 @@ namespace FinalProject
             }
             return distance;
         }
+
+        private void Compare_button_Click(object sender, RoutedEventArgs e)
+        {
+            if (flagKmeans && flagPageRank)
+            {
+
+            }
+            else
+            {
+                MessageBox.Show("To make a comparison the two algorithms must be run", "Error", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+
+        }
+
         private void prints_rowClosest_centroidDifference(Dictionary<string, float>[] centroids, List<int>[] lineClusters, int K, int iteration)
         {
             string print = string.Format("\n\n>>>>>>>>>>  Iteration number {0}  <<<<<<<<<<", iteration);
@@ -1109,8 +1124,6 @@ namespace FinalProject
             }
             UiInvoke(() => txtEditor.Text += print);
         }
-
-
-        
+            
     }
 }

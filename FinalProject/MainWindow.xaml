@@ -18,14 +18,15 @@
         <Label Content="DataSet Ranking Application" HorizontalAlignment="Left" Margin="181,0,0,0" VerticalAlignment="Top" Width="684" Height="78" FontFamily="Papyrus" FontSize="48" FontWeight="Bold"/>
         <TextBox x:Name="txtEditor" Height="400" Margin="47,159,47,0" TextWrapping="Wrap" VerticalAlignment="Top" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible" IsReadOnly = "True" />
         <Button x:Name="PageRank_button" Content="PageRank" HorizontalAlignment="Left" Margin="102,583,0,0" VerticalAlignment="Top" Width="115" Height="40" FontFamily="AR JULIAN" FontSize="14" Click="PageRank_button_Click" IsEnabled="False"/>
-        <Button x:Name="kmeans_button" Content="K-Means" HorizontalAlignment="Left" Margin="329,583,0,0" VerticalAlignment="Top" Width="115" Height="40" FontFamily="AR JULIAN" FontSize="14" Click="kmeans_button_Click" IsEnabled="False"/>
-        <Label x:Name="timer_lebal" Content="Timer:" HorizontalAlignment="Left" Margin="698,580,0,0" VerticalAlignment="Top" Width="79" RenderTransformOrigin="0.54,1.276" FontSize="24" FontFamily="Imprint MT Shadow" Height="39"/>
-        <TextBlock x:Name="ClockTextBlock" HorizontalAlignment="Left" Margin="782,585,0,0" TextWrapping="Wrap" Text="00:00:00" VerticalAlignment="Top" Height="39" Width="160" FontFamily="Imprint MT Shadow" FontSize="24"/>
+        <Button x:Name="kmeans_button" Content="K-Means" HorizontalAlignment="Left" Margin="292,583,0,0" VerticalAlignment="Top" Width="115" Height="40" FontFamily="AR JULIAN" FontSize="14" Click="kmeans_button_Click" IsEnabled="False"/>
+        <Label x:Name="timer_lebal" Content="Timer:" HorizontalAlignment="Left" Margin="749,580,0,0" VerticalAlignment="Top" Width="79" RenderTransformOrigin="0.54,1.276" FontSize="24" FontFamily="Imprint MT Shadow" Height="39"/>
+        <TextBlock x:Name="ClockTextBlock" HorizontalAlignment="Left" Margin="833,585,0,0" TextWrapping="Wrap" Text="00:00:00" VerticalAlignment="Top" Height="39" Width="160" FontFamily="Imprint MT Shadow" FontSize="24"/>
         <StackPanel Height="42" Margin="342,94,0,0" VerticalAlignment="Top" Width="533" HorizontalAlignment="Left" Orientation="Horizontal">
             <Label x:Name="DistanceBy_label" Content="Distance By:  " FontFamily="AR JULIAN" FontSize="21.333"/>
             <RadioButton x:Name="Jaccard_radioButton" Content="Jaccard Distance    " FontSize="21.333" Checked="jaccard_Checked" />
             <RadioButton x:Name="Cosine_radioButton" Content="Cosine Distance" FontSize="21.333" Checked="cosine_Checked" />
         </StackPanel>
+        <Button x:Name="compare_button_Copy" Content="Compare" HorizontalAlignment="Left" Margin="601,583,0,0" VerticalAlignment="Top" Width="115" Height="40" FontFamily="AR JULIAN" FontSize="14" Click="Compare_button_Click"/>
 
 
 
