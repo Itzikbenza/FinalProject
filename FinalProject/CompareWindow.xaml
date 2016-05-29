@@ -1,0 +1,21 @@
+﻿<Window x:Name="CompareWindow" x:Class="FinalProject.CalculateWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FinalProject"
+        mc:Ignorable="d"
+        Title="PageRank VS K-Means" Height="807" Width="1400" WindowStartupLocation="CenterScreen">
+    <Grid Background="#FF30D6E1">
+        <Label Content="DataSet Ranking Application" Margin="354,10,354,0" VerticalAlignment="Top" Height="78" FontFamily="Papyrus" FontSize="48" FontWeight="Bold"/>
+        <Grid Height="56" Margin="66,78,66,0" VerticalAlignment="Top">
+            <Label x:Name="label_pagerank" Content="PageRank :" HorizontalAlignment="Left" Margin="184,8,0,0" VerticalAlignment="Top" FontSize="21.333" RenderTransformOrigin="0.142,0.526"/>
+            <Label x:Name="label_kmeans" Content="K-Means :" HorizontalAlignment="Left" Margin="928,8,0,0" FontSize="21.333" Height="38" VerticalAlignment="Top"/>
+        </Grid>
+        <StackPanel Margin="27,134,28,40" Orientation="Horizontal">
+            <TextBox x:Name="textBox_pagerank" TextWrapping="Wrap" Width="665" Panel.ZIndex="-5" Margin="0,0,20,0" VerticalScrollBarVisibility="Visible" ScrollViewer.CanContentScroll="True" Text=" "/>
+            <TextBox x:Name="textBox_kmeans" TextWrapping="Wrap" Width="641" Panel.ZIndex="20" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Visible" ScrollViewer.CanContentScroll="True" Text=" "/>
+        </StackPanel>
+
+    </Grid>
+</Window>

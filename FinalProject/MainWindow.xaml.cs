@@ -7,11 +7,6 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
 using System.Diagnostics;
-using System.Text.RegularExpressions;
-using System.Windows.Input;
-using System.Threading.Tasks;
-using System.ComponentModel;
-using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace FinalProject
@@ -36,14 +31,16 @@ namespace FinalProject
         float[][] JdistanceKmeans; //matrix of all jaccard distance of Kmeans values
         float[][] CosineDistanceKmeans; //matrix of all cosine distance of Kmeans values
         float[][] CosineDistancePR; //matrix of all cosine distance of PageRank values
+        float[][] JdistancePR; //matrix of all jaccard distance of PageRank values
         Dictionary<string, int>[] arrayDictionaries; //array of dictionaries --> to represent the vectors
         HashSet<string> hashSet = new HashSet<string>(); //HashSet of the file values
         int linesNumber; //size of rows
         string[][] FileMatrix; //matrix of the file readed
         string[] lines; //array of string - the lines of the file readed
         string FileBuff; //buffer of the file readed
-        bool flagKmeans = false, flagPageRank = false;
-
+        bool flagKmeans = false, flagPageRank = false;//floag-if the algorithm was run
+        bool CosinePRWasRun = false, JaccardPRWasRun = false, CosineKmeansWasRun = false, JaccardKmeansWasRun = false; //flag-if the algorithm already was run for this file
+        string kmeans, pagerank; //save the output for compare
         FileInfo fileLoaded = new FileInfo("file");
         Object thisLock = new Object(); //object lock critical section
 
@@ -105,6 +102,7 @@ namespace FinalProject
                             UiInvoke(() => txtEditor.Text = FileBuff);
                             UiInvoke(() => kmeans_button.IsEnabled = true);
                             UiInvoke(() => PageRank_button.IsEnabled = true);
+                            CosinePRWasRun = false; JaccardPRWasRun = false; CosineKmeansWasRun = false; JaccardKmeansWasRun = false;
                             //UiInvoke(() => txtEditor.TextChanged += (o, args) => kmeans_button.IsEnabled = true);
                             //UiInvoke(() => txtEditor.TextChanged += (o, args) => PageRank_button.IsEnabled = true);
                         }
@@ -168,23 +166,56 @@ namespace FinalProject
             {
                 if (Jaccard_radioButton.IsChecked == true)
                 {
-                    kmeans_button.IsEnabled = false;
-                    PageRank_button.IsEnabled = false;
+                    if (JaccardPRWasRun)
+                    {
+                        kmeans_button.IsEnabled = false;
+                        PageRank_button.IsEnabled = false;
+                        PageRank_by_Jaccard_algorithm();
+                    }
+                    else
+                    {
+                        kmeans_button.IsEnabled = false;
+                        PageRank_button.IsEnabled = false;
 
-                    txtEditor.Text = string.Format("Calculating Jaccard distances of '{0}' file ! Please wait . . .\n\n ", fileLoaded.Name);
-                    //Jaccard_PageRank();
+                        txtEditor.Text = string.Format("Calculating Jaccard distances of '{0}' file ! Please wait . . .\n\n ", fileLoaded.Name);
+                        Jaccard_PageRank();
+                    }
+                    
                 }
                 if (Cosine_radioButton.IsChecked == true)
                 {
-                    kmeans_button.IsEnabled = false;
-                    PageRank_button.IsEnabled = false;
+                    if (CosinePRWasRun)
+                    {
+                        kmeans_button.IsEnabled = false;
+                        PageRank_button.IsEnabled = false;
+                        PageRank_by_Cosine_algorithm();
+                    }
+                    else
+                    {
+                        kmeans_button.IsEnabled = false;
+                        PageRank_button.IsEnabled = false;
 
-                    txtEditor.Text = string.Format("Calculating Cosine distances of '{0}' file ! Please wait . . .\n\n ", fileLoaded.Name);
-                    Cosine_PageRank();
+                        txtEditor.Text = string.Format("Calculating Cosine distances of '{0}' file ! Please wait . . .\n\n ", fileLoaded.Name);
+                        Cosine_PageRank();
+                    }
                 }
             }
         }
+        private void Jaccard_PageRank()
+        {
+            //START TIMER
+            stopWatch.Reset();
+            stopWatch.Start();
+            timer.Start();
 
+            Thread normalizeThread = new Thread(() => NormalizationData(FileBuff));
+            Thread jaccardPRThread = new Thread(() => calc_PageRank_jaccardDistance());
+
+            normalizeThread.Start();
+            normalizeThread.Join();
+            ShowHsahSet();
+            jaccardPRThread.Start();
+        }
         private void Cosine_PageRank()
         {
             //START TIMER
@@ -200,14 +231,26 @@ namespace FinalProject
             ShowHsahSet();
             cosinePRThread.Start();
         }
+        private void calc_PageRank_jaccardDistance()
+        {
+            Dictionary<string, int> countValues = CreatCountItems();
+            Dictionary<string, float> frequnceDict = initFreqDict(countValues);
+            printInverseDict(frequnceDict);
+            calc_JaccardDistancePagerank(frequnceDict);
+
+            timer.Stop();
+            stopWatch.Stop();
+            UiInvoke(() => MessageBox.Show(String.Format("Finish - Jaccard Distance on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
+            Thread PageRankByJaccard = new Thread(() => PageRank_by_Jaccard_algorithm());
+            PageRankByJaccard.SetApartmentState(ApartmentState.STA);
+            PageRankByJaccard.Start();
+        }
         private void calc_PageRank_cosineDistance()
         {
             Dictionary<string, int> countValues = CreatCountItems();
             Dictionary<string, float> frequnceDict = initFreqDict(countValues);
             printInverseDict(frequnceDict);
             calc_CosineDistancePagerank(frequnceDict);
-            //printMatrix(CosinePagerankMatrix);
-            //PageRank_calculate(CosinePagerankMatrix, K);
 
             timer.Stop();
             stopWatch.Stop();
@@ -215,6 +258,30 @@ namespace FinalProject
             Thread PageRankByCosine = new Thread(() => PageRank_by_Cosine_algorithm());
             PageRankByCosine.SetApartmentState(ApartmentState.STA);
             PageRankByCosine.Start();
+        }
+        private void PageRank_by_Jaccard_algorithm()
+        {
+            string question = "How many max ranked rows do you want to show?";
+            int kValue;
+            kInputWindow kInput = new kInputWindow(question, linesNumber);
+            kInput.ShowDialog();
+            if (kInput.DialogResult.HasValue && kInput.DialogResult.Value)
+            {
+                //Start TIMER
+                currentTime = string.Empty;
+                stopWatch.Reset();
+                stopWatch.Start();
+                timer.Start();
+
+                kValue = Convert.ToInt32(kInput.Answer); // K input
+                Thread pagerankJaccardThread = new Thread(() => PageRank_Jaccard_Calculate(kValue));
+                pagerankJaccardThread.Start();
+            }
+            else
+            {
+                kmeans_button.IsEnabled = true;
+                PageRank_button.IsEnabled = true;
+            }
         }
         private void PageRank_by_Cosine_algorithm()
         {
@@ -234,6 +301,82 @@ namespace FinalProject
                 Thread pagerankCosineThread = new Thread(() => PageRank_Cosine_Calculate(kValue));
                 pagerankCosineThread.Start();
             }
+            else
+            {
+                kmeans_button.IsEnabled = true;
+                PageRank_button.IsEnabled = true;
+            }
+        }
+        private void PageRank_Jaccard_Calculate(int K)
+        {
+            double[] PageRank = new double[linesNumber];
+            double[] newPageRank = new double[linesNumber];
+            Dictionary<int, double> RankDictionary;
+            double divEpsilon = 1.0, Epsilon = 1.0, newEpsilon = 0.0;
+            double sumVector, sumPR;
+            double d = 0.85;
+            //************************  INIT  ************************
+            double rank = (float)1 / linesNumber;
+            for (int i = 0; i < linesNumber; i++)
+            {
+                sumPR = 0;
+                for (int j = 0; j < linesNumber; j++)
+                {
+                    sumPR += JdistancePR[j][i];
+                }
+                PageRank[i] = rank * sumPR;
+            }
+            RankDictionary = initRankDictionary(PageRank);
+            //************************************************
+            int iteration = 1;
+            string print = "########################################  PAGERANK BY JACCARD DISTANCE:  ########################################\n";
+            UiInvoke(() => txtEditor.Text = print);
+
+            while (divEpsilon > 0.01)
+            {
+                print = string.Format("\n>>>>>>>>>>  Iteration number {0}  <<<<<<<<<<", iteration);
+                UiInvoke(() => txtEditor.Text += print);
+
+                //calc--> NewPageRank
+                for (int i = 0; i < linesNumber; i++)
+                    newPageRank[i] = (1 - d) + d * PageRank[i];
+                sumVector = 0;
+                for (int i = 0; i < linesNumber; i++)
+                    sumVector += newPageRank[i];
+                for (int i = 0; i < linesNumber; i++)
+                    newPageRank[i] = newPageRank[i] / sumVector;
+
+                //calc difference between the old pagerank and new pagerank
+                newEpsilon = 0.0;
+                for (int i = 0; i < linesNumber; i++)
+                    newEpsilon += Math.Pow(newPageRank[i] - PageRank[i], 2);
+                newEpsilon = Math.Sqrt(newEpsilon);
+                divEpsilon = Math.Abs(newEpsilon - Epsilon) / Epsilon;
+
+                //copy - for the next iteration
+                Epsilon = newEpsilon;
+                for (int i = 0; i < linesNumber; i++)
+                {
+                    PageRank[i] = newPageRank[i];
+                }
+
+                //Update rankDictionary and print K max Ranked
+                for (int i = 0; i < newPageRank.Length; i++)
+                    RankDictionary[i] = newPageRank[i];
+                printMaxRanks(RankDictionary, K);
+
+                iteration++;
+            }
+            UiInvoke(() => txtEditor.Text += string.Format("\n\n>>>>>>>>>>  FINISH AFTER {0} ITERATIONS  <<<<<<<<<<", iteration));
+            UiInvoke(() => pagerank = txtEditor.Text);
+            flagPageRank = true;
+            CosinePRWasRun = false; JaccardPRWasRun = true; 
+            //Stop TIMER
+            timer.Stop();
+            stopWatch.Stop();
+            UiInvoke(() => MessageBox.Show(String.Format("Finish - PageRank of Jaccard on: {0}", ClockTextBlock.Text), "Thread", MessageBoxButton.OK, MessageBoxImage.Information));
+            UiInvoke(() => kmeans_button.IsEnabled = true);
+            UiInvoke(() => PageRank_button.IsEnabled = true);
         }
         private void PageRank_Cosine_Calculate(int K)
         {
@@ -279,7 +422,7 @@ namespace FinalProject
                 for (int i = 0; i < linesNumber; i++)
                     newEpsilon += Math.Pow(newPageRank[i] - PageRank[i], 2);
                 newEpsilon = Math.Sqrt(newEpsilon);
-                divEpsilon = Math.Abs(newEpsilon - Epsilon);
+                divEpsilon = Math.Abs(newEpsilon - Epsilon)/ Epsilon;
 
                 //copy - for the next iteration
                 Epsilon = newEpsilon;
@@ -296,6 +439,9 @@ namespace FinalProject
                 iteration++;
             }
             UiInvoke(() => txtEditor.Text += string.Format("\n\n>>>>>>>>>>  FINISH AFTER {0} ITERATIONS  <<<<<<<<<<", iteration));
+            UiInvoke(() => pagerank = txtEditor.Text);
+            flagPageRank = true;
+            CosinePRWasRun = true; JaccardPRWasRun = false;
             //Stop TIMER
             timer.Stop();
             stopWatch.Stop();
@@ -373,6 +519,57 @@ namespace FinalProject
             }
             return frequnceDict;
         }
+        public void calc_JaccardDistancePagerank(Dictionary<string, float> frequnceDict)
+        {
+            //Create an inverse frequency normaliztion vectors
+            Dictionary<string, float>[] freqDictionaries;
+            freqDictionaries = new Dictionary<string, float>[linesNumber];
+            for (int i = 0; i < linesNumber; i++)
+            {
+                freqDictionaries[i] = new Dictionary<string, float>();
+                foreach (KeyValuePair<string, float> item in frequnceDict)
+                {
+                    if (arrayDictionaries[i][item.Key] > 0)
+                    {
+                        freqDictionaries[i][item.Key] = frequnceDict[item.Key];
+                    }
+                    else
+                        freqDictionaries[i][item.Key] = 0;
+                }
+            }
+
+            double numerator;
+            double denominatorA, denominatorB;
+            JdistancePR = new float[linesNumber][];
+
+            for (int i = 0; i < linesNumber; i++)
+            {
+                JdistancePR[i] = new float[linesNumber];
+                for (int j = i; j < linesNumber; j++)
+                {
+                    numerator = 0;
+                    denominatorA = 0;
+                    denominatorB = 0;
+
+                    foreach (KeyValuePair<string, float> item in freqDictionaries[i])
+                    {
+                        numerator += freqDictionaries[j][item.Key] * item.Value;
+                        denominatorA += Math.Pow(item.Value, 2);
+                        denominatorB += Math.Pow(freqDictionaries[j][item.Key], 2);
+                    }
+                    if (denominatorA == 0 || denominatorB == 0) //checking Division by zero
+                        JdistancePR[i][j] = 0;
+                    else
+                        JdistancePR[i][j] = 1 - ((float)(numerator / (Math.Sqrt(denominatorA) * Math.Sqrt(denominatorB))));
+                }
+            }
+
+            for (int i = 0; i < linesNumber; i++)
+                for (int j = 0; i > j; j++)
+                    if (JdistancePR[i][j] == 0)
+                        JdistancePR[i][j] = JdistancePR[j][i];
+
+        }
         public void calc_CosineDistancePagerank(Dictionary<string, float> frequnceDict)
         {
             //Create an inverse frequency normaliztion vectors
@@ -447,6 +644,7 @@ namespace FinalProject
                     if (CosineDistancePR[i][j] == 0)
                         CosineDistancePR[i][j] = CosineDistancePR[j][i];
         }
+
         // OLD PAGERANK
         private void calc_pageRank_cosineSimilarity()
         {
@@ -512,19 +710,37 @@ namespace FinalProject
             {
                 if (Jaccard_radioButton.IsChecked == true)
                 {
-                    kmeans_button.IsEnabled = false;
-                    PageRank_button.IsEnabled = false;
+                    if (JaccardKmeansWasRun)
+                    {
+                        kmeans_button.IsEnabled = false;
+                        PageRank_button.IsEnabled = false;
+                        kmeans_by_Jaccard_algorithm();
+                    }
+                    else
+                    {
+                        kmeans_button.IsEnabled = false;
+                        PageRank_button.IsEnabled = false;
 
-                    txtEditor.Text = string.Format("Calculating Jaccard distances of '{0}' file ! Please wait . . .\n\n ", fileLoaded.Name);
-                    Jaccard_Kmeans();
+                        txtEditor.Text = string.Format("Calculating Jaccard distances of '{0}' file ! Please wait . . .\n\n ", fileLoaded.Name);
+                        Jaccard_Kmeans();
+                    }
                 }
                 if (Cosine_radioButton.IsChecked == true)
                 {
-                    kmeans_button.IsEnabled = false;
-                    PageRank_button.IsEnabled = false;
+                    if (CosineKmeansWasRun)
+                    {
+                        kmeans_button.IsEnabled = false;
+                        PageRank_button.IsEnabled = false;
+                        kmeans_by_Cosine_algorithm();
+                    }
+                    else
+                    {
+                        kmeans_button.IsEnabled = false;
+                        PageRank_button.IsEnabled = false;
 
-                    txtEditor.Text = string.Format("Calculating Cosine distances of '{0}' file ! Please wait . . .\n\n ", fileLoaded.Name);
-                    Cosine_Kmeans();
+                        txtEditor.Text = string.Format("Calculating Cosine distances of '{0}' file ! Please wait . . .\n\n ", fileLoaded.Name);
+                        Cosine_Kmeans();
+                    }
                 }
             }
         }
@@ -693,11 +909,16 @@ namespace FinalProject
                 Dictionary<string, float>[] clustCentroid = new Dictionary<string, float>[kValue];
                 int iteration = 1;
 
-                UiInvoke(() => txtEditor.Text = "######################################## K-MEANS BY JACCARD DISTANCE ########################################");
+                UiInvoke(() => txtEditor.Text = "######################################## K-MEANS BY JACCARD DISTANCE ########################################\n");
                 // >>> INIT ITERATION<<<
                 linesClusters = initRandom(kValue);
                 Thread jaccardKmeansThread = new Thread(() => kmeans_jaccard(linesClusters, clustCentroid, kValue, iteration, hasChange));
                 jaccardKmeansThread.Start();
+            }
+            else
+            {
+                kmeans_button.IsEnabled = true;
+                PageRank_button.IsEnabled = true;
             }
         }
         private void kmeans_by_Cosine_algorithm()
@@ -720,11 +941,16 @@ namespace FinalProject
                 Dictionary<string, float>[] clustCentroid = new Dictionary<string, float>[kValue];
                 int iteration = 1;
 
-                UiInvoke(() => txtEditor.Text = "######################################## K-MEANS BY COSINE DISTANCE ########################################");
+                UiInvoke(() => txtEditor.Text = "######################################## K-MEANS BY COSINE DISTANCE ########################################\n");
                 // >>> INIT ITERATION<<<
                 linesClusters = initRandom(kValue);
                 Thread cosineKmeansThread = new Thread(() => kmeans_cosine(linesClusters, clustCentroid, kValue, iteration, hasChange));
                 cosineKmeansThread.Start();
+            }
+            else
+            {
+                kmeans_button.IsEnabled = true;
+                PageRank_button.IsEnabled = true;
             }
         }
         private void kmeans_jaccard(List<int>[] linesClusters, Dictionary<string, float>[] clustCentroid, int kValue, int iteration, bool hasChange)
@@ -739,6 +965,9 @@ namespace FinalProject
                 iteration++;
             }
             UiInvoke(() => txtEditor.Text += string.Format("\n\n>>>>>>>>>>  FINISH AFTER {0} ITERATIONS  <<<<<<<<<<", iteration));
+            UiInvoke(() => kmeans = txtEditor.Text);
+            flagKmeans = true;
+            CosineKmeansWasRun = false; JaccardKmeansWasRun = true;
             //Stop TIMER
             timer.Stop();
             stopWatch.Stop();
@@ -758,6 +987,9 @@ namespace FinalProject
                 iteration++;
             }
             UiInvoke(() => txtEditor.Text += string.Format("\n\n>>>>>>>>>>  FINISH AFTER {0} ITERATIONS  <<<<<<<<<<", iteration));
+            UiInvoke(() => kmeans = txtEditor.Text);
+            flagKmeans = true;
+            CosineKmeansWasRun = true; JaccardKmeansWasRun = false;
             //Stop TIMER
             timer.Stop();
             stopWatch.Stop();
@@ -1086,6 +1318,8 @@ namespace FinalProject
         {
             if (flagKmeans && flagPageRank)
             {
+                CalculateWindow compareWin = new CalculateWindow(pagerank, kmeans);
+                compareWin.ShowDialog();
 
             }
             else
