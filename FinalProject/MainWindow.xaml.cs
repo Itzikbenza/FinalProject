@@ -351,7 +351,7 @@ namespace FinalProject
                 for (int i = 0; i < linesNumber; i++)
                     newEpsilon += Math.Pow(newPageRank[i] - PageRank[i], 2);
                 newEpsilon = Math.Sqrt(newEpsilon);
-                divEpsilon = Math.Abs(newEpsilon - Epsilon) / Epsilon;
+                divEpsilon = Math.Abs(newEpsilon - Epsilon);
 
                 //copy - for the next iteration
                 Epsilon = newEpsilon;
@@ -422,7 +422,7 @@ namespace FinalProject
                 for (int i = 0; i < linesNumber; i++)
                     newEpsilon += Math.Pow(newPageRank[i] - PageRank[i], 2);
                 newEpsilon = Math.Sqrt(newEpsilon);
-                divEpsilon = Math.Abs(newEpsilon - Epsilon)/ Epsilon;
+                divEpsilon = Math.Abs(newEpsilon - Epsilon);
 
                 //copy - for the next iteration
                 Epsilon = newEpsilon;
@@ -449,20 +449,20 @@ namespace FinalProject
             UiInvoke(() => kmeans_button.IsEnabled = true);
             UiInvoke(() => PageRank_button.IsEnabled = true);
         }
-        private void printMaxRanks(Dictionary<int, double> temp, int K)
+        private void printMaxRanks(Dictionary<int, double> rankDict, int K)
         {
-            var items = (from pair in temp
+            var items = (from pair in rankDict
                          orderby pair.Value descending
                          select pair).ToDictionary(pair => pair.Key, pair => pair.Value).Take(K);
 
             // Display results.
             string print = string.Format("\nThe {0} max ranked lines are:\n", K);
             print += ("----------------------------------------------------------------------------------------------------------------------------------\n");
-            foreach (KeyValuePair<int, double> pair in items)
+            foreach (KeyValuePair<int, double> item in items)
             {
-                print += string.Format("line {0}:   {1}\n", pair.Key, pair.Value);
-                for (int i = 0; i < FileMatrix[pair.Key].Length; i++)
-                    print += FileMatrix[pair.Key][i] + " ";
+                print += string.Format("line {0}:  pagerank value:  {1}\n", item.Key, item.Value);
+                for (int i = 0; i < FileMatrix[item.Key].Length; i++)
+                    print += FileMatrix[item.Key][i] + " ";
                 print += ("\n----------------------------------------------------------------------------------------------------------------------------------\n");
             }
             UiInvoke(() => txtEditor.Text += print);
