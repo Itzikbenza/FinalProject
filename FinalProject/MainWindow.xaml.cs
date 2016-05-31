@@ -279,8 +279,9 @@ namespace FinalProject
             }
             else
             {
-                kmeans_button.IsEnabled = true;
-                PageRank_button.IsEnabled = true;
+                UiInvoke(() => kmeans_button.IsEnabled = true);
+                UiInvoke(() => PageRank_button.IsEnabled = true);
+                JaccardPRWasRun = true;
             }
         }
         private void PageRank_by_Cosine_algorithm()
@@ -303,8 +304,9 @@ namespace FinalProject
             }
             else
             {
-                kmeans_button.IsEnabled = true;
-                PageRank_button.IsEnabled = true;
+                UiInvoke(() => kmeans_button.IsEnabled = true);
+                UiInvoke(() => PageRank_button.IsEnabled = true);
+                CosinePRWasRun = true;
             }
         }
         private void PageRank_Jaccard_Calculate(int K)
@@ -917,8 +919,9 @@ namespace FinalProject
             }
             else
             {
-                kmeans_button.IsEnabled = true;
-                PageRank_button.IsEnabled = true;
+                UiInvoke(() => kmeans_button.IsEnabled = true);
+                UiInvoke(() => PageRank_button.IsEnabled = true);
+                JaccardKmeansWasRun = true;
             }
         }
         private void kmeans_by_Cosine_algorithm()
@@ -949,8 +952,9 @@ namespace FinalProject
             }
             else
             {
-                kmeans_button.IsEnabled = true;
-                PageRank_button.IsEnabled = true;
+                UiInvoke(() => kmeans_button.IsEnabled = true);
+                UiInvoke(() => PageRank_button.IsEnabled = true);
+                CosineKmeansWasRun = true;
             }
         }
         private void kmeans_jaccard(List<int>[] linesClusters, Dictionary<string, float>[] clustCentroid, int kValue, int iteration, bool hasChange)
